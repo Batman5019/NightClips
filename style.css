@@ -1,0 +1,407 @@
+/* =========================
+   GLOBAL
+========================= */
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #0f0f0f;
+  color: #eee;
+}
+
+/* =========================
+   AUTH PAGE
+========================= */
+.auth-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.auth-container h1 {
+  font-size: 2em;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.auth-container input {
+  width: 280px;
+  padding: 12px;
+  background: #1b1b1b;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1em;
+}
+
+.auth-container button {
+  width: 280px;
+  padding: 12px;
+  background: #2c2c2c;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.auth-container button:hover {
+  background: #3c3c3c;
+}
+
+.auth-container p {
+  color: #ff6666;
+  font-weight: bold;
+  height: 20px;
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+.container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1 {
+  margin-bottom: 15px;
+  color: #fff;
+}
+
+/* =========================
+   TABS
+========================= */
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  background: #1c1c1c;
+  color: #aaa;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.tab-btn:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.tab-btn.active {
+  background: #333;
+  color: #fff;
+}
+
+/* =========================
+   VIDEO GRID / CARDS
+========================= */
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+}
+
+.card {
+  background: #1a1a1a;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.card video {
+  width: 100%;
+  border-radius: 6px;
+  background: #000;
+}
+
+/* Download / Delete buttons inside card */
+.card a, .card button {
+  background: #2b2b2b;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  font-size: 0.9em;
+}
+
+.card a:hover, .card button:hover {
+  background: #3b3b3b;
+}
+
+/* =========================
+   UPLOAD CARD
+========================= */
+.upload-card {
+  background: #141414;
+  padding: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.upload-card button {
+  background: #2b2b2b;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.upload-card button:hover {
+  background: #3b3b3b;
+}
+
+#fileName {
+  color: #aaa;
+  font-size: 0.95em;
+  flex: 1;
+}
+
+/* =========================
+   PROFILE CARD
+========================= */
+.profile-card {
+  background: #141414;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-card input {
+  padding: 10px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+}
+
+.profile-card button {
+  padding: 12px;
+  background: #2b2b2b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.profile-card button:hover {
+  background: #3b3b3b;
+}
+
+.profile-card img {
+  margin-top: 10px;
+  max-width: 120px;
+  border-radius: 50%;
+  border: 2px solid #555;
+  align-self: center;
+}
+/* Upload card input group */
+.upload-card .input-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 10px;
+}
+
+.upload-card .input-group label {
+  font-size: 0.9em;
+  color: #aaa;
+  margin-bottom: 5px;
+}
+
+.upload-card .input-group input[type="text"] {
+  padding: 12px;
+  background: #1b1b1b;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1em;
+  transition: 0.2s;
+}
+
+.upload-card .input-group input[type="text"]::placeholder {
+  color: #555;
+}
+
+.upload-card .input-group input[type="text"]:focus {
+  outline: none;
+  border-color: #555;
+  box-shadow: 0 0 5px #555;
+}
+.upload-card {
+  position: relative; /* Make the card a positioning context */
+  padding-bottom: 40px; /* Give some space for the footer text */
+}
+
+.upload-card h5 {
+  position: absolute;
+  bottom: 10px;       /* distance from the bottom of the card */
+  left: 50%;          /* start at horizontal center */
+  transform: translateX(-50%); /* center it exactly */
+  color: #b0b0b0;     /* light grey color */
+  font-weight: normal; /* optional, makes it lighter */
+  font-size: 0.9rem;   /* optional, smaller text */
+  margin: 0;          /* remove default margin */
+}
+#dashboardPage h1 {
+  text-align: center;      /* centers the text horizontally */
+  margin-top: 20px;        /* optional: spacing from top of page */
+  font-size: 2rem;         /* adjust size if needed */
+  font-weight: bold;       /* optional: make it bold */
+}
+.dashboard-header {
+  display: flex;
+  align-items: center;    /* vertically center text and image */
+  justify-content: center; /* centers the whole group horizontally */
+  gap: 10px;              /* space between image and text */
+  margin-top: 20px;
+}
+
+.dashboard-header h1 {
+  margin: 0;             /* remove default margins */
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.dashboard-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+#uploadBarContainer {
+  width: 100%;
+  background: #222;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 12px;
+  margin-top: 10px;
+}
+
+#uploadBar {
+  width: 0%;
+  height: 100%;
+  background: #4caf50;
+  transition: width 0.3s ease;
+}
+.new-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e1e1e;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  color: white;
+  font-weight: bold;
+  animation: slideDown 0.3s ease;
+}
+
+.new-banner button {
+  background: #4cafef;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* badge card like video card */
+.badge-card {
+  display: flex;
+  flex-direction: column;   /* stack image, title, subtitle */
+  align-items: center;
+  width: 120px;
+  height: 160px;
+  background: #1e1e1e;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  text-align: center;
+  padding: 8px;
+  color: white;
+  font-family: sans-serif;
+}
+
+.badge-card img {
+  width: 100%;          /* fill card width */
+  height: 70px;         /* fixed height */
+  object-fit: contain;  /* keep aspect ratio */
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.badge-card .badge-title {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.badge-card .badge-subtitle {
+  font-size: 12px;
+  color: #ccc;
+}
+.custom-video{
+width:100%;
+border-radius:8px;
+background:black;
+}
+
+.video-controls{
+display:flex;
+justify-content:center;
+margin-top:6px;
+}
+
+.video-controls button{
+background:#1e1e1e;
+border:none;
+color:white;
+padding:6px 12px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.video-controls button:hover{
+background:#333;
+}

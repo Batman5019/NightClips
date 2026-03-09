@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Moody Video Platform</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- AUTH PAGE -->
+<div id="authPage" class="auth-container">
+  <h1>Welcome</h1>
+
+  <input id="usernameInput" type="text" placeholder="Username">
+  <input id="passwordInput" type="password" placeholder="Password">
+
+  <button id="signupBtn">Sign Up</button>
+  <button id="loginBtn">Log In</button>
+
+  <p id="authMessage"></p>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboardPage" class="container" style="display:none;">
+
+  <!-- HEADER -->
+  <div class="dashboard-header">
+    <img src="https://iili.io/qHLANEJ.png" alt="Logo" class="dashboard-logo">
+    <h1>XYZ Hub</h1>
+  </div>
+
+  <!-- Tabs -->
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab-btn active" data-tab="photosTab">Photos</button>
+  <button class="tab-btn" data-tab="videosTab">Videos</button>
+  <button class="tab-btn" data-tab="libraryTab">Library</button>
+  <button class="tab-btn" data-tab="uploadTab">Upload</button>
+  <button class="tab-btn" data-tab="profileTab">Profile</button>
+  <button class="tab-btn" data-tab="badgesTab">Badges</button>
+</div>
+  
+  <div id="newVideosBanner" style="display:none;" class="new-banner">
+  <span>🎬 Find New Videos</span>
+  <button id="reloadVideosBtn">Reload</button>
+</div>
+  
+  <!-- GALLERY -->
+  <div id="gallery" class="tab-content">
+    <div id="allVideos" class="video-grid"></div>
+  </div>
+
+  <!-- LIBRARY -->
+  <div id="library" class="tab-content" style="display:none;">
+    <div id="userVideos" class="video-grid"></div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div id="upload" class="tab-content" style="display:none;">
+    <div class="upload-card">
+
+      <div class="input-group">
+        <label for="videoTitleInput">Video Title</label>
+        <input type="text" id="videoTitleInput" placeholder="Enter your video title">
+      </div>
+
+      <input type="file" id="videoInput" accept="video/*" hidden>
+      <button id="chooseFileBtn">Choose Video</button>
+      <span id="fileName">No video selected</span>
+
+      <input type="file" id="thumbnailInput" accept="image/*" hidden>
+      <button id="chooseThumbnailBtn">Choose Thumbnail</button>
+      <span id="thumbnailFileName">No thumbnail selected</span>
+
+      <button id="uploadBtn">Upload</button>
+
+      <div id="uploadBarContainer">
+        <div id="uploadBar"></div>
+      </div>
+      <!-- inside UPLOAD tab -->
+<p id="uploadMessage"></p>
+
+      <h5>uploading might take a few minutes</h5>
+      <p id="authMessage"></p>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="profile" class="tab-content" style="display:none;">
+    <div class="profile-card">
+      <p>User ID: <span id="userId"></span></p>
+      <input type="text" id="editUsernameInput" placeholder="Change username">
+      <input type="file" id="profilePicInput">
+      <button id="saveProfileBtn">Save Profile</button>
+      <img id="profilePicPreview" />
+    </div>
+  </div>
+</div>
+
+  <div id="badgesTab" class="tab-content" style="display:none;">
+  <h3>All Badges</h3>
+  <div id="badgesList" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+</div>
+  
+<script src="app.js"></script>
+</body>
+</html>
