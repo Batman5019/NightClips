@@ -1,904 +1,705 @@
-/* =========================
-   IMPORTS & VARIABLES
-========================= */
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-
-:root {
-  --bg: #080808;
-  --surface: #101010;
-  --surface2: #161616;
-  --surface3: #1e1e1e;
-  --border: rgba(255,255,255,0.07);
-  --border-hover: rgba(255,255,255,0.15);
-  --text: #f0ede8;
-  --text-muted: #6b6762;
-  --text-soft: #a09b95;
-  --accent: #e8c97a;
-  --accent-dim: rgba(232, 201, 122, 0.12);
-  --accent-glow: rgba(232, 201, 122, 0.25);
-  --red: #e05c5c;
-  --radius: 10px;
-  --radius-lg: 16px;
-  --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* =========================
-   GLOBAL RESET
-========================= */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html { scroll-behavior: smooth; }
-
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  background-image:
-    radial-gradient(ellipse 80% 40% at 50% -10%, rgba(232,201,122,0.05) 0%, transparent 70%);
-}
-
-/* =========================
-   AUTH PAGE
-========================= */
-.auth-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 14px;
-  position: relative;
-  overflow: hidden;
-}
-
-.auth-container::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle 600px at 50% 50%, rgba(232,201,122,0.04), transparent),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 39px,
-      rgba(255,255,255,0.015) 39px,
-      rgba(255,255,255,0.015) 40px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 39px,
-      rgba(255,255,255,0.015) 39px,
-      rgba(255,255,255,0.015) 40px
-    );
-  pointer-events: none;
-}
-
-.auth-container h1 {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 3.8rem;
-  letter-spacing: 0.12em;
-  color: var(--text);
-  margin-bottom: 8px;
-  position: relative;
-}
-
-.auth-container h1::after {
-  content: '';
-  display: block;
-  width: 40px;
-  height: 2px;
-  background: var(--accent);
-  margin: 8px auto 0;
-}
-
-.auth-container input {
-  width: 300px;
-  padding: 14px 18px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color var(--transition), box-shadow var(--transition);
-}
-
-.auth-container input::placeholder { color: var(--text-muted); }
-
-.auth-container input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim);
-}
-
-.auth-container button {
-  width: 300px;
-  padding: 14px;
-  background: var(--surface3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition: background var(--transition), border-color var(--transition), transform var(--transition);
-}
-
-.auth-container button:first-of-type {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #1a1200;
-}
-
-.auth-container button:first-of-type:hover {
-  background: #f0d68a;
-  transform: translateY(-1px);
-}
-
-.auth-container button:last-of-type:hover {
-  background: var(--surface3);
-  border-color: var(--border-hover);
-  transform: translateY(-1px);
-}
-
-.auth-container p {
-  color: var(--red);
-  font-size: 0.88rem;
-  font-weight: 500;
-  height: 20px;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-/* =========================
-   DASHBOARD CONTAINER
-========================= */
-.container {
-  padding: 0 28px 60px;
-  max-width: 1280px;
-  margin: 0 auto;
-}
-
-/* =========================
-   HEADER
-========================= */
-.dashboard-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 36px 0 28px;
-  position: relative;
-}
-
-.dashboard-header::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-}
-
-.dashboard-header h1 {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 2.8rem;
-  letter-spacing: 0.14em;
-  color: var(--text);
-  margin: 0;
-}
-
-.dashboard-logo {
-  width: 52px;
-  height: 52px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 12px var(--accent-glow));
-}
-
-/* =========================
-   TABS
-========================= */
-.tabs {
-  display: flex;
-  gap: 6px;
-  margin: 24px 0 20px;
-  flex-wrap: wrap;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0;
-}
-
-.tab-btn {
-  background: transparent;
-  color: var(--text-muted);
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 10px 18px 12px;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.88rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: color var(--transition), border-color var(--transition);
-  margin-bottom: -1px;
-}
-
-.tab-btn:hover { color: var(--text-soft); }
-
-.tab-btn.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-/* =========================
-   NEW VIDEOS BANNER
-========================= */
-.new-banner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--accent-dim);
-  border: 1px solid rgba(232, 201, 122, 0.2);
-  padding: 12px 18px;
-  border-radius: var(--radius);
-  margin-bottom: 20px;
-  color: var(--accent);
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  animation: slideDown 0.3s ease;
-}
-
-.new-banner button {
-  background: var(--accent);
-  border: none;
-  padding: 7px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 0.82rem;
-  color: #1a1200;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  transition: background var(--transition);
-}
-
-.new-banner button:hover { background: #f0d68a; }
-
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* =========================
-   VIDEO GRID / CARDS
-========================= */
-.video-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 18px;
-}
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: visible;
-  display: flex;
-  flex-direction: column;
-  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
-  position: relative;
-}
-
-/* clip only the top media, not the whole card */
-.card > img,
-.cvp-wrapper,
-.cvp-thumb-wrap {
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  overflow: hidden;
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  border-color: var(--border-hover);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(232,201,122,0.06);
-}
-
-.card > img {
-  width: 100%;
-  aspect-ratio: 16/9;
-  object-fit: cover;
-  display: block;
-}
-
-.card p {
-  padding: 12px 14px 4px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text);
-  line-height: 1.4;
-}
-
-.card a,
-.card button {
-  display: block;
-  margin: 4px 14px;
-  background: var(--surface3);
-  color: var(--text-soft);
-  border: 1px solid var(--border);
-  padding: 8px 12px;
-  border-radius: 7px;
-  cursor: pointer;
-  text-align: center;
-  text-decoration: none;
-  font-size: 0.82rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  font-family: 'DM Sans', sans-serif;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
-}
-
-.card a:last-child,
-.card button:last-child { margin-bottom: 12px; }
-
-.card a:hover,
-.card button:hover {
-  background: var(--surface2);
-  color: var(--text);
-  border-color: var(--border-hover);
-}
-
-.card button[onclick]:hover {
-  background: rgba(224, 93, 93, 0.1);
-  border-color: rgba(224, 93, 93, 0.35);
-  color: #f09090;
-}
-
-/* =========================
-   UPLOAD CARD
-========================= */
-.upload-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 32px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-  max-width: 540px;
-  position: relative;
-  padding-bottom: 52px;
-}
-
-.upload-card .input-group {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  gap: 6px;
-}
-
-.upload-card .input-group label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.upload-card .input-group input[type="text"] {
-  padding: 13px 16px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color var(--transition), box-shadow var(--transition);
-  width: 100%;
-}
-
-.upload-card .input-group input[type="text"]::placeholder { color: var(--text-muted); }
-
-.upload-card .input-group input[type="text"]:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim);
-}
-
-.upload-card button {
-  background: var(--surface3);
-  border: 1px solid var(--border);
-  padding: 11px 20px;
-  border-radius: var(--radius);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.88rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition: background var(--transition), border-color var(--transition), transform var(--transition);
-}
-
-.upload-card button:hover {
-  background: var(--surface2);
-  border-color: var(--border-hover);
-  transform: translateY(-1px);
-}
-
-.upload-card button#uploadBtn {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #1a1200;
-  font-weight: 700;
-  padding: 13px 28px;
-  width: 100%;
-}
-
-.upload-card button#uploadBtn:hover {
-  background: #f0d68a;
-  border-color: #f0d68a;
-  transform: translateY(-1px);
-}
-
-#fileName, #thumbnailFileName {
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-#uploadMessage {
-  color: var(--text-soft);
-  font-size: 0.88rem;
-  font-family: 'JetBrains Mono', monospace;
-  min-height: 20px;
-}
-
-.upload-card h5 {
-  position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 400;
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-#uploadBarContainer {
-  width: 100%;
-  background: var(--surface3);
-  border-radius: 100px;
-  overflow: hidden;
-  height: 4px;
-}
-
-#uploadBar {
-  width: 0%;
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent), #f5e0a0);
-  transition: width 0.3s ease;
-  border-radius: 100px;
-}
-
-/* =========================
-   PROFILE CARD
-========================= */
-.profile-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 32px;
-  border-radius: var(--radius-lg);
-  max-width: 420px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.profile-card p {
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.profile-card p span { color: var(--accent); }
-
-.profile-card input[type="text"],
-.profile-card input[type="file"] {
-  padding: 12px 16px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.92rem;
-  outline: none;
-  transition: border-color var(--transition), box-shadow var(--transition);
-  width: 100%;
-}
-
-.profile-card input[type="file"] {
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  padding: 10px 14px;
-}
-
-.profile-card input[type="text"]:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim);
-}
-
-.profile-card button {
-  padding: 13px;
-  background: var(--accent);
-  border: none;
-  border-radius: var(--radius);
-  color: #1a1200;
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 700;
-  font-size: 0.92rem;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  transition: background var(--transition), transform var(--transition);
-}
-
-.profile-card button:hover {
-  background: #f0d68a;
-  transform: translateY(-1px);
-}
-
-.profile-card img {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--border);
-  align-self: center;
-  box-shadow: 0 0 0 4px var(--accent-dim);
-}
-
-#profileMessage {
-  color: var(--text-soft);
-  font-size: 0.82rem;
-  font-family: 'JetBrains Mono', monospace;
-  text-align: center;
-}
-
-/* =========================
-   BADGES TAB
-========================= */
-#badgesTab h3 {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.6rem;
-  letter-spacing: 0.1em;
-  color: var(--text-soft);
-  margin-bottom: 20px;
-}
-
-#badgesList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-}
-
-.badge-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 130px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 16px 10px 14px;
-  gap: 8px;
-  text-align: center;
-  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
-}
-
-.badge-card:not([style*="opacity: 0.4"]):hover {
-  border-color: rgba(232, 201, 122, 0.35);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px var(--accent-dim);
-}
-
-.badge-card img {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  border-radius: 8px;
-}
-
-.badge-card .badge-title {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--text);
-  letter-spacing: 0.04em;
-}
-
-.badge-card .badge-subtitle {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  line-height: 1.4;
-}
-
-/* =========================
-   SCROLLBAR
-========================= */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 100px; }
-::-webkit-scrollbar-thumb:hover { background: #2e2e2e; }
-
-::selection { background: var(--accent-dim); color: var(--accent); }
-
-/* =========================
-   CUSTOM VIDEO PLAYER
-========================= */
-.cvp-wrapper {
-  position: relative;
-  background: #000;
-  display: block;
-  width: 100%;
-  aspect-ratio: 16/9;
-  overflow: visible;
-  cursor: pointer;
-  outline: none;
-}
-
-/* When the browser puts us in fullscreen, fill the screen */
-.cvp-wrapper:fullscreen,
-.cvp-wrapper:-webkit-full-screen,
-.cvp-wrapper:-moz-full-screen {
-  width: 100vw;
-  height: 100vh;
-  aspect-ratio: unset;
-  overflow: hidden;
-}
-
-.cvp-wrapper:fullscreen .cvp-video,
-.cvp-wrapper:-webkit-full-screen .cvp-video,
-.cvp-wrapper:-moz-full-screen .cvp-video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.cvp-video {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: contain;
-}
-
-.cvp-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  transition: background 0.2s;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.cvp-overlay--dim {
-  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
-}
-
-.cvp-big-play {
-  width: 64px;
-  height: 64px;
-  background: var(--accent);
-  border: none;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: opacity 0.2s, transform 0.15s;
-  pointer-events: all;
-  box-shadow: 0 0 24px var(--accent-glow);
-}
-
-.cvp-big-play svg {
-  width: 24px;
-  height: 24px;
-  color: #1a1200;
-  margin-left: 3px;
-}
-
-.cvp-big-play:hover { transform: scale(1.1); }
-
-.cvp-controls {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  padding: 10px 14px 12px;
-  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 3;
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.22s ease, transform 0.22s ease;
-  pointer-events: none;
-}
-
-.cvp-controls--visible {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: all;
-}
-
-.cvp-progress-row { width: 100%; }
-
-.cvp-progress-track {
-  width: 100%;
-  height: 3px;
-  background: rgba(255,255,255,0.2);
-  position: relative;
-  cursor: pointer;
-  transition: height 0.15s;
-  border-radius: 100px;
-}
-
-.cvp-progress-track:hover { height: 5px; }
-
-.cvp-progress-buf {
-  position: absolute;
-  top: 0; left: 0;
-  height: 100%;
-  background: rgba(255,255,255,0.25);
-  pointer-events: none;
-  width: 0%;
-  border-radius: 100px;
-}
-
-.cvp-progress-fill {
-  position: absolute;
-  top: 0; left: 0;
-  height: 100%;
-  background: var(--accent);
-  pointer-events: none;
-  width: 0%;
-  border-radius: 100px;
-}
-
-.cvp-progress-thumb {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  width: 12px;
-  height: 12px;
-  background: var(--accent);
-  border-radius: 50%;
-  pointer-events: none;
-  transition: transform 0.15s;
-  left: 0%;
-  box-shadow: 0 0 6px var(--accent-glow);
-}
-
-.cvp-progress-track:hover .cvp-progress-thumb {
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.cvp-btn-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.cvp-btn {
-  background: transparent;
-  border: none;
-  color: #fff;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0;
-  opacity: 0.8;
-  transition: opacity 0.15s, transform 0.12s;
-  flex-shrink: 0;
-}
-
-.cvp-btn:hover { opacity: 1; transform: scale(1.12); }
-.cvp-btn svg { width: 18px; height: 18px; }
-
-.cvp-time {
-  color: rgba(255,255,255,0.75);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  margin-left: 2px;
-}
-
-.cvp-vol-slider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 72px;
-  height: 3px;
-  background: rgba(255,255,255,0.25);
-  border-radius: 100px;
-  outline: none;
-  cursor: pointer;
-}
-
-.cvp-vol-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 10px;
-  height: 10px;
-  background: var(--accent);
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.cvp-vol-slider::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
-  background: var(--accent);
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-}
-
-/* Thumbnail with play overlay */
-.cvp-thumb-wrap {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16/9;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.cvp-thumb-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.3s;
-}
-
-.cvp-thumb-wrap:hover img { transform: scale(1.04); }
-
-.cvp-thumb-play {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.3);
-  transition: background 0.2s;
-}
-
-.cvp-thumb-wrap:hover .cvp-thumb-play { background: rgba(0,0,0,0.45); }
-
-.cvp-thumb-play svg {
-  width: 52px;
-  height: 52px;
-  color: #1a1200;
-  background: var(--accent);
-  border-radius: 50%;
-  padding: 14px 12px 14px 16px;
-  filter: drop-shadow(0 4px 16px var(--accent-glow));
-  transition: transform 0.15s;
-}
-
-.cvp-thumb-wrap:hover .cvp-thumb-play svg { transform: scale(1.1); }
+const { createClient } = supabase;
+
+// =====================
+// SUPABASE CLIENT
+// =====================
+const supabaseClient = createClient(
+  "https://olyuzdwaeilrxvqfsgju.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9seXV6ZHdhZWlscnh2cWZzZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjQ1ODAsImV4cCI6MjA4NjYwMDU4MH0.wVynFRV7IWKZwp3kl7PO6B5uWP535CoojZ9wVxcsJM4"
+);
+
+const banner = document.getElementById("newVideosBanner");
+
+supabaseClient
+  .channel("uploads-watch")
+  .on(
+    "postgres_changes",
+    { event: "INSERT", schema: "public", table: "uploads" },
+    (payload) => {
+      console.log("New upload detected", payload);
+      banner.style.display = "flex";
+    }
+  )
+  .subscribe();
+
+// =====================
+// BADGES DEFINITIONS
+// =====================
+const BADGES = [
+  {
+    id: "new",
+    text: "New",
+    subtitle: "Uploaded in last 24h",
+    image: "https://iili.io/qFOHXln.jpg",
+    condition: (uploads) => {
+      const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+      return uploads.some((f) => new Date(f.created_at).getTime() > dayAgo);
+    },
+  },
+  {
+    id: "video",
+    text: "Video",
+    subtitle: "Uploaded a video",
+    image: "https://iili.io/qFOB4g2.jpg",
+    condition: (uploads) =>
+      uploads.some((f) => f.file_type && f.file_type.startsWith("video")),
+  },
+  {
+    id: "mine",
+    text: "Present",
+    subtitle: "You've uploaded something!",
+    image: "https://iili.io/qFOBse9.webp",
+    condition: (uploads) => uploads.length > 0,
+  },
+];
+
+// =====================
+// ELEMENTS
+// =====================
+let latestUploadTime = 0;
+const authPage = document.getElementById("authPage");
+const dashboardPage = document.getElementById("dashboardPage");
+const usernameInput = document.getElementById("usernameInput");
+const passwordInput = document.getElementById("passwordInput");
+const authMessage = document.getElementById("authMessage");
+const signupBtn = document.getElementById("signupBtn");
+const loginBtn = document.getElementById("loginBtn");
+const tabBtns = document.querySelectorAll(".tab-btn");
+const tabContents = document.querySelectorAll(".tab-content");
+const videoInput = document.getElementById("videoInput");
+const chooseVideoBtn = document.getElementById("chooseFileBtn");
+const videoFileName = document.getElementById("fileName");
+const thumbnailInput = document.getElementById("thumbnailInput");
+const chooseThumbnailBtn = document.getElementById("chooseThumbnailBtn");
+const thumbnailFileName = document.getElementById("thumbnailFileName");
+const uploadBtn = document.getElementById("uploadBtn");
+const uploadBar = document.getElementById("uploadBar");
+const userIdText = document.getElementById("userId");
+const uploadBarContainer = document.getElementById("uploadBarContainer");
+const uploadMessage = document.getElementById("uploadMessage");
+const editUsernameInput = document.getElementById("editUsernameInput");
+const profilePicInput = document.getElementById("profilePicInput");
+const saveProfileBtn = document.getElementById("saveProfileBtn");
+const profilePicPreview = document.getElementById("profilePicPreview");
+const profileMessage = document.getElementById("profileMessage");
+
+// =====================
+// CUSTOM VIDEO PLAYER
+// =====================
+function formatTime(seconds) {
+  if (isNaN(seconds)) return "0:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function createVideoPlayer(url) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "cvp-wrapper";
+
+  const vid = document.createElement("video");
+  vid.src = url;
+  vid.playsInline = true;
+  vid.preload = "metadata";
+  vid.className = "cvp-video";
+
+  const overlay = document.createElement("div");
+  overlay.className = "cvp-overlay";
+
+  // Big play button in center
+  const bigPlay = document.createElement("button");
+  bigPlay.className = "cvp-big-play";
+  bigPlay.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
+  overlay.appendChild(bigPlay);
+
+  // Controls bar
+  const controls = document.createElement("div");
+  controls.className = "cvp-controls";
+
+  // Progress row
+  const progressRow = document.createElement("div");
+  progressRow.className = "cvp-progress-row";
+
+  const progressTrack = document.createElement("div");
+  progressTrack.className = "cvp-progress-track";
+
+  const progressBuf = document.createElement("div");
+  progressBuf.className = "cvp-progress-buf";
+
+  const progressFill = document.createElement("div");
+  progressFill.className = "cvp-progress-fill";
+
+  const progressThumb = document.createElement("div");
+  progressThumb.className = "cvp-progress-thumb";
+
+  progressTrack.appendChild(progressBuf);
+  progressTrack.appendChild(progressFill);
+  progressTrack.appendChild(progressThumb);
+  progressRow.appendChild(progressTrack);
+  controls.appendChild(progressRow);
+
+  // Buttons row
+  const btnRow = document.createElement("div");
+  btnRow.className = "cvp-btn-row";
+
+  // Play/pause
+  const playBtn = document.createElement("button");
+  playBtn.className = "cvp-btn cvp-play";
+  playBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
+
+  // Time display
+  const timeDisplay = document.createElement("span");
+  timeDisplay.className = "cvp-time";
+  timeDisplay.textContent = "0:00 / 0:00";
+
+  // Volume
+  const volBtn = document.createElement("button");
+  volBtn.className = "cvp-btn cvp-vol";
+  volBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>`;
+
+  const volSlider = document.createElement("input");
+  volSlider.type = "range";
+  volSlider.min = 0;
+  volSlider.max = 1;
+  volSlider.step = 0.05;
+  volSlider.value = 1;
+  volSlider.className = "cvp-vol-slider";
+
+  // Fullscreen
+  const fsBtn = document.createElement("button");
+  fsBtn.className = "cvp-btn cvp-fs";
+  fsBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>`;
+
+  btnRow.appendChild(playBtn);
+  btnRow.appendChild(timeDisplay);
+
+  // Spacer
+  const spacer = document.createElement("div");
+  spacer.style.flex = "1";
+  btnRow.appendChild(spacer);
+
+  btnRow.appendChild(volBtn);
+  btnRow.appendChild(volSlider);
+  btnRow.appendChild(fsBtn);
+  controls.appendChild(btnRow);
+  wrapper.appendChild(vid);
+  wrapper.appendChild(overlay);
+  wrapper.appendChild(controls);
+
+  // ---- STATE ----
+  let playing = false;
+  let muted = false;
+  let controlsVisible = true;
+  let hideTimeout = null;
+
+  function showControls() {
+    controls.classList.add("cvp-controls--visible");
+    overlay.classList.add("cvp-overlay--dim");
+    controlsVisible = true;
+    clearTimeout(hideTimeout);
+    if (playing) {
+      hideTimeout = setTimeout(hideControls, 2800);
+    }
+  }
+
+  function hideControls() {
+    if (!playing) return;
+    controls.classList.remove("cvp-controls--visible");
+    overlay.classList.remove("cvp-overlay--dim");
+    controlsVisible = false;
+  }
+
+  function updatePlayIcon(isPlaying) {
+    const icon = isPlaying
+      ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
+    playBtn.innerHTML = icon;
+    bigPlay.innerHTML = icon;
+  }
+
+  function togglePlay() {
+    if (vid.paused) {
+      vid.play();
+    } else {
+      vid.pause();
+    }
+  }
+
+  vid.addEventListener("play", () => {
+    playing = true;
+    updatePlayIcon(true);
+    bigPlay.style.opacity = "0";
+    showControls();
+  });
+
+  vid.addEventListener("pause", () => {
+    playing = false;
+    updatePlayIcon(false);
+    bigPlay.style.opacity = "1";
+    showControls();
+  });
+
+  vid.addEventListener("ended", () => {
+    playing = false;
+    updatePlayIcon(false);
+    bigPlay.style.opacity = "1";
+    showControls();
+  });
+
+  vid.addEventListener("timeupdate", () => {
+    if (!vid.duration) return;
+    const pct = (vid.currentTime / vid.duration) * 100;
+    progressFill.style.width = pct + "%";
+    progressThumb.style.left = pct + "%";
+    timeDisplay.textContent = `${formatTime(vid.currentTime)} / ${formatTime(vid.duration)}`;
+  });
+
+  vid.addEventListener("loadedmetadata", () => {
+    timeDisplay.textContent = `0:00 / ${formatTime(vid.duration)}`;
+  });
+
+  vid.addEventListener("progress", () => {
+    if (vid.buffered.length > 0 && vid.duration) {
+      const bufPct = (vid.buffered.end(vid.buffered.length - 1) / vid.duration) * 100;
+      progressBuf.style.width = bufPct + "%";
+    }
+  });
+
+  // Click progress track to seek
+  progressTrack.addEventListener("click", (e) => {
+    const rect = progressTrack.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    vid.currentTime = pct * vid.duration;
+  });
+
+  // Drag progress
+  let dragging = false;
+  progressTrack.addEventListener("mousedown", (e) => {
+    dragging = true;
+    const rect = progressTrack.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    vid.currentTime = pct * vid.duration;
+  });
+  document.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const rect = progressTrack.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    vid.currentTime = pct * vid.duration;
+  });
+  document.addEventListener("mouseup", () => { dragging = false; });
+
+  // Play/pause
+  playBtn.addEventListener("click", togglePlay);
+  bigPlay.addEventListener("click", togglePlay);
+  vid.addEventListener("click", togglePlay);
+
+  // Volume slider
+  volSlider.addEventListener("input", () => {
+    vid.volume = parseFloat(volSlider.value);
+    muted = vid.volume === 0;
+    updateVolIcon();
+  });
+
+  function updateVolIcon() {
+    volBtn.innerHTML = muted || vid.volume === 0
+      ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06A8.99 8.99 0 0 0 17.73 19l1.27 1.27L20.27 19 5.27 4 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>`;
+  }
+
+  volBtn.addEventListener("click", () => {
+    muted = !muted;
+    vid.muted = muted;
+    volSlider.value = muted ? 0 : vid.volume || 0.7;
+    updateVolIcon();
+  });
+
+  // Fullscreen
+  fsBtn.addEventListener("click", () => {
+    const el = wrapper;
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (el.requestFullscreen) el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+    }
+  });
+
+  const onFsChange = () => {
+    const inFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    fsBtn.innerHTML = inFs
+      ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>`;
+  };
+
+  document.addEventListener("fullscreenchange", onFsChange);
+  document.addEventListener("webkitfullscreenchange", onFsChange);
+
+  // Show/hide controls on mouse move
+  wrapper.addEventListener("mousemove", showControls);
+  wrapper.addEventListener("mouseleave", () => {
+    if (playing) hideControls();
+  });
+
+  // Touch support
+  wrapper.addEventListener("touchstart", () => {
+    if (controlsVisible) {
+      togglePlay();
+    } else {
+      showControls();
+    }
+  }, { passive: true });
+
+  // Keyboard shortcuts (when focused)
+  wrapper.setAttribute("tabindex", "0");
+  wrapper.addEventListener("keydown", (e) => {
+    if (e.code === "Space") { e.preventDefault(); togglePlay(); }
+    if (e.code === "ArrowRight") { vid.currentTime = Math.min(vid.duration, vid.currentTime + 5); }
+    if (e.code === "ArrowLeft")  { vid.currentTime = Math.max(0, vid.currentTime - 5); }
+    if (e.code === "ArrowUp")    { vid.volume = Math.min(1, vid.volume + 0.1); volSlider.value = vid.volume; }
+    if (e.code === "ArrowDown")  { vid.volume = Math.max(0, vid.volume - 0.1); volSlider.value = vid.volume; }
+    if (e.code === "KeyF")       { fsBtn.click(); }
+    if (e.code === "KeyM")       { volBtn.click(); }
+  });
+
+  // Show controls initially
+  showControls();
+
+  return wrapper;
+}
+
+// =====================
+// HELPERS FOR USER RECORD
+// =====================
+async function getUserRecord(userId) {
+  const { data, error } = await supabaseClient
+    .from("users").select("*").eq("id", userId).single();
+  if (error) { console.error("Error fetching user record:", error); return null; }
+  return data;
+}
+
+async function getUsernameById(userId) {
+  const record = await getUserRecord(userId);
+  return record?.username || null;
+}
+
+// =====================
+// AUTH
+// =====================
+signupBtn.onclick = async () => {
+  authMessage.textContent = "";
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value;
+  if (!username || !password) { authMessage.textContent = "Fill all fields"; return; }
+  const email = `${username}@fake.local`;
+  const { data, error } = await supabaseClient.auth.signUp({ email, password });
+  if (error) { authMessage.textContent = error.message; return; }
+  await supabaseClient.from("users").insert({ id: data.user.id, username });
+  init();
+};
+
+loginBtn.onclick = async () => {
+  authMessage.textContent = "";
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value;
+  if (!username || !password) { authMessage.textContent = "Fill all fields"; return; }
+  const email = `${username}@fake.local`;
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) { authMessage.textContent = error.message; } else { init(); }
+};
+
+// =====================
+// BADGES TAB RENDER
+// =====================
+function renderBadgesTab(earnedBadgeIds = []) {
+  const badgesList = document.getElementById("badgesList");
+  badgesList.innerHTML = "";
+  BADGES.forEach((badge) => {
+    const card = document.createElement("div");
+    card.className = "badge-card";
+    const img = document.createElement("img");
+    img.src = badge.image;
+    const title = document.createElement("div");
+    title.className = "badge-title";
+    title.textContent = badge.text;
+    const subtitle = document.createElement("div");
+    subtitle.className = "badge-subtitle";
+    subtitle.textContent = badge.subtitle || "";
+    const earned = earnedBadgeIds.includes(badge.id);
+    if (!earned) { card.style.opacity = "0.4"; subtitle.textContent += " (Locked)"; }
+    card.appendChild(img);
+    card.appendChild(title);
+    card.appendChild(subtitle);
+    badgesList.appendChild(card);
+  });
+}
+
+// =====================
+// INIT
+// =====================
+async function init() {
+  const { data } = await supabaseClient.auth.getUser();
+  if (!data.user) {
+    authPage.style.display = "grid";
+    dashboardPage.style.display = "none";
+    return;
+  }
+  authPage.style.display = "none";
+  dashboardPage.style.display = "block";
+  userIdText.textContent = "#" + data.user.id.slice(0, 7);
+  await loadProfile();
+  await loadGallery();
+  await loadLibrary();
+  await updateBadges();
+}
+
+init();
+
+// =====================
+// TABS
+// =====================
+tabBtns.forEach((btn) => {
+  btn.onclick = () => {
+    tabBtns.forEach((b) => b.classList.remove("active"));
+    tabContents.forEach((c) => (c.style.display = "none"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).style.display = "block";
+  };
+});
+
+// =====================
+// FILE INPUTS
+// =====================
+chooseVideoBtn.onclick = () => videoInput.click();
+chooseThumbnailBtn.onclick = () => thumbnailInput.click();
+videoInput.onchange = () => { videoFileName.textContent = videoInput.files[0]?.name || "No video selected"; };
+thumbnailInput.onchange = () => { thumbnailFileName.textContent = thumbnailInput.files[0]?.name || "No thumbnail selected"; };
+
+// =====================
+// PROFILE LOGIC
+// =====================
+async function loadProfile() {
+  const { data: auth, error: authErr } = await supabaseClient.auth.getUser();
+  if (authErr || !auth.user) return;
+  const userRecord = await getUserRecord(auth.user.id);
+  if (!userRecord) return;
+  editUsernameInput.value = userRecord.username || "";
+  if (userRecord.profile_pic_url) profilePicPreview.src = userRecord.profile_pic_url;
+  else profilePicPreview.src = "";
+}
+
+saveProfileBtn.onclick = async () => {
+  profileMessage.textContent = "";
+  const { data: auth, error: authErr } = await supabaseClient.auth.getUser();
+  if (authErr) { profileMessage.textContent = "Auth error"; return; }
+  if (!auth.user) { profileMessage.textContent = "Not logged in"; return; }
+  const newUsername = editUsernameInput.value.trim();
+  const picFile = profilePicInput.files[0];
+  if (!newUsername && !picFile) { profileMessage.textContent = "Nothing to update"; return; }
+  const updateData = {};
+  if (newUsername) updateData.username = newUsername;
+  if (picFile) {
+    const sanitizedName = picFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
+    const path = `${auth.user.id}/profile/${Date.now()}_${sanitizedName}`;
+    const { error: picError } = await supabaseClient.storage.from("public-files").upload(path, picFile, { upsert: true });
+    if (picError) { profileMessage.textContent = "Profile pic upload failed"; return; }
+    const { data: publicUrlData } = supabaseClient.storage.from("public-files").getPublicUrl(path);
+    updateData.profile_pic_url = publicUrlData.publicUrl;
+  }
+  const { error: updateError } = await supabaseClient.from("users").update(updateData).eq("id", auth.user.id);
+  if (updateError) { profileMessage.textContent = "Failed to update profile"; return; }
+  if (updateData.profile_pic_url) profilePicPreview.src = updateData.profile_pic_url;
+  profileMessage.textContent = "Profile updated!";
+};
+
+// =====================
+// UPLOAD LOGIC
+// =====================
+uploadBtn.onclick = async () => {
+  const videoFile = videoInput.files[0];
+  const thumbnailFile = thumbnailInput.files[0];
+  const title = document.getElementById("videoTitleInput").value.trim();
+  if (!videoFile) { uploadMessage.textContent = "No video selected"; return; }
+  if (!title) { uploadMessage.textContent = "Enter a video title"; return; }
+  uploadMessage.textContent = "Uploading...";
+  uploadBar.style.width = "0%";
+  const { data: auth } = await supabaseClient.auth.getUser();
+  if (!auth.user) { uploadMessage.textContent = "Not logged in"; return; }
+  const username = (await getUsernameById(auth.user.id)) || "Unknown";
+  const displayTitle = `${title} [${username}]`;
+  const timestamp = Date.now();
+  const sanitizedVideoName = videoFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
+  const videoPath = `${auth.user.id}/${timestamp}_${sanitizedVideoName}`;
+  let progress = 0;
+  const interval = setInterval(() => {
+    if (progress < 90) { progress += 5; uploadBar.style.width = progress + "%"; }
+  }, 100);
+  try {
+    const { error: videoError } = await supabaseClient.storage.from("public-files").upload(videoPath, videoFile, { upsert: true });
+    clearInterval(interval);
+    uploadBar.style.width = "100%";
+    if (videoError) throw videoError;
+    let thumbnailPath = null;
+    if (thumbnailFile) {
+      const sanitizedThumb = thumbnailFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
+      thumbnailPath = `${auth.user.id}/thumbnails/${timestamp}_${sanitizedThumb}`;
+      const { error: thumbError } = await supabaseClient.storage.from("public-files").upload(thumbnailPath, thumbnailFile, { upsert: true });
+      if (thumbError) throw thumbError;
+    }
+    await supabaseClient.from("uploads").insert({
+      user_id: auth.user.id,
+      title: displayTitle,
+      file_name: videoFile.name,
+      file_path: videoPath,
+      file_type: videoFile.type,
+      thumbnail_path: thumbnailPath,
+    });
+    videoInput.value = null;
+    thumbnailInput.value = null;
+    videoFileName.textContent = "No video selected";
+    thumbnailFileName.textContent = "No thumbnail selected";
+    document.getElementById("videoTitleInput").value = "";
+    uploadBar.style.width = "0%";
+    uploadMessage.textContent = "Upload complete!";
+    await loadGallery();
+    await loadLibrary();
+    await updateBadges();
+  } catch (err) {
+    clearInterval(interval);
+    uploadBar.style.width = "0%";
+    console.error(err);
+    uploadMessage.textContent = "Sorry that file is too big, compress it or use a new video";
+  }
+};
+
+// =====================
+// BUILD A CARD
+// =====================
+function buildCard(file, showDelete, onDelete) {
+  const url = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
+  const card = document.createElement("div");
+  card.className = "card";
+
+  if (file.thumbnail_path) {
+    // Show thumbnail, replace with player on click
+    const thumbUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.thumbnail_path).data.publicUrl;
+    const thumbWrap = document.createElement("div");
+    thumbWrap.className = "cvp-thumb-wrap";
+    const img = document.createElement("img");
+    img.src = thumbUrl;
+    const playOverlay = document.createElement("div");
+    playOverlay.className = "cvp-thumb-play";
+    playOverlay.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
+    thumbWrap.appendChild(img);
+    thumbWrap.appendChild(playOverlay);
+    thumbWrap.addEventListener("click", () => {
+      const player = createVideoPlayer(url);
+      card.replaceChild(player, thumbWrap);
+      // auto-play
+      const v = player.querySelector("video");
+      if (v) v.play();
+    });
+    card.appendChild(thumbWrap);
+  } else if (file.file_type && file.file_type.startsWith("video")) {
+    card.appendChild(createVideoPlayer(url));
+  }
+
+  const vidTitle = document.createElement("p");
+  vidTitle.textContent = file.title;
+  card.appendChild(vidTitle);
+
+  const dl = document.createElement("a");
+  dl.href = url;
+  dl.download = "";
+  dl.textContent = "↓ Download";
+  card.appendChild(dl);
+
+  if (showDelete) {
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "✕ Delete";
+    delBtn.onclick = onDelete;
+    card.appendChild(delBtn);
+  }
+
+  return card;
+}
+
+// =====================
+// LOAD GALLERY (ALL VIDEOS)
+// =====================
+async function loadGallery() {
+  const allVideos = document.getElementById("allVideos");
+  const { data: uploads, error } = await supabaseClient
+    .from("uploads").select("*").order("created_at", { ascending: false });
+  if (error) { console.error(error); return; }
+
+  if (uploads.length > 0) {
+    const newest = new Date(uploads[0].created_at).getTime();
+    if (latestUploadTime && newest > latestUploadTime) banner.style.display = "flex";
+    latestUploadTime = newest;
+  }
+
+  allVideos.innerHTML = "";
+  const { data: authData } = await supabaseClient.auth.getUser();
+
+  uploads.forEach((file) => {
+    const isOwner = authData.user && authData.user.id === file.user_id;
+    const card = buildCard(file, isOwner, async () => {
+      await supabaseClient.from("uploads").delete().eq("id", file.id);
+      await supabaseClient.storage.from("public-files").remove([file.file_path]);
+      if (file.thumbnail_path) await supabaseClient.storage.from("public-files").remove([file.thumbnail_path]);
+      await loadGallery();
+      await loadLibrary();
+      await updateBadges();
+    });
+    allVideos.appendChild(card);
+  });
+}
+
+// =====================
+// LOAD LIBRARY (USER VIDEOS)
+// =====================
+async function loadLibrary() {
+  const userVideos = document.getElementById("userVideos");
+  userVideos.innerHTML = "";
+  const { data: authData } = await supabaseClient.auth.getUser();
+  if (!authData.user) return;
+
+  const { data: uploads, error } = await supabaseClient
+    .from("uploads").select("*").eq("user_id", authData.user.id).order("created_at", { ascending: false });
+  if (error) { console.error(error); return; }
+
+  uploads.forEach((file) => {
+    const card = buildCard(file, true, async () => {
+      await supabaseClient.from("uploads").delete().eq("id", file.id);
+      await supabaseClient.storage.from("public-files").remove([file.file_path]);
+      if (file.thumbnail_path) await supabaseClient.storage.from("public-files").remove([file.thumbnail_path]);
+      await loadGallery();
+      await loadLibrary();
+      await updateBadges();
+    });
+    userVideos.appendChild(card);
+  });
+}
+
+// =====================
+// BADGE UPDATE
+// =====================
+async function updateBadges() {
+  const { data: authData } = await supabaseClient.auth.getUser();
+  if (!authData.user) { renderBadgesTab([]); return; }
+  const { data: uploads, error } = await supabaseClient.from("uploads").select("*").eq("user_id", authData.user.id);
+  if (error) { renderBadgesTab([]); return; }
+  const earned = BADGES.filter((b) => b.condition(uploads)).map((b) => b.id);
+  renderBadgesTab(earned);
+}
+
+// =====================
+// NEW VIDEOS BANNER
+// =====================
+document.getElementById("reloadVideosBtn").onclick = () => {
+  document.getElementById("newVideosBanner").style.display = "none";
+  loadGallery();
+};
