@@ -53,7 +53,7 @@ const BADGES = [
   {
     id: "mine",
     text: "Present",
-    subtitle: "You’ve uploaded something!",
+    subtitle: "You've uploaded something!",
     image: "https://iili.io/qFOBse9.webp",
     condition: (uploads) => uploads.length > 0,
   },
@@ -514,6 +514,7 @@ async function loadGallery() {
 
     const card = document.createElement("div");
     card.className = "card";
+    card.dataset.title = (file.title || "").toLowerCase();
 
     if (file.thumbnail_path) {
       const thumbUrl = supabaseClient.storage
@@ -565,15 +566,28 @@ async function loadGallery() {
 
     allVideos.appendChild(card);
   });
+
+  // Re-apply any active search filter after gallery reloads
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput && searchInput.value.trim()) {
+    filterGallery(searchInput.value);
+  }
+}
+
+// =====================
+// SEARCH / FILTER GALLERY
+// =====================
+function filterGallery(query) {
+  const cards = document.querySelectorAll("#allVideos .card");
+  const q = query.toLowerCase().trim();
+  cards.forEach((card) => {
+    const title = card.dataset.title || "";
+    card.style.display = title.includes(q) ? "flex" : "none";
+  });
 }
 
 document.getElementById("searchInput").addEventListener("input", function () {
-  const query = this.value.toLowerCase().trim();
-  const cards = document.querySelectorAll("#allVideos .card");
-  cards.forEach((card) => {
-    const title = card.querySelector("p")?.textContent.toLowerCase() || "";
-    card.style.display = title.includes(query) ? "flex" : "none";
-  });
+  filterGallery(this.value);
 });
 
 // =====================
