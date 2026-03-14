@@ -567,6 +567,15 @@ async function loadGallery() {
   });
 }
 
+document.getElementById("searchInput").addEventListener("input", function () {
+  const query = this.value.toLowerCase().trim();
+  const cards = document.querySelectorAll("#allVideos .card");
+  cards.forEach((card) => {
+    const title = card.querySelector("p")?.textContent.toLowerCase() || "";
+    card.style.display = title.includes(query) ? "flex" : "none";
+  });
+});
+
 // =====================
 // LOAD LIBRARY (USER VIDEOS)
 // =====================
