@@ -108,6 +108,31 @@ h1 {
 }
 
 /* =========================
+   SEARCH BAR
+========================= */
+.search-bar {
+  width: 100%;
+  padding: 12px 16px;
+  background: #1b1b1b;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1em;
+  margin-bottom: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-bar::placeholder {
+  color: #555;
+}
+
+.search-bar:focus {
+  outline: none;
+  border-color: #555;
+  box-shadow: 0 0 5px #555;
+}
+
+/* =========================
    VIDEO GRID / CARDS
 ========================= */
 .video-grid {
@@ -165,6 +190,8 @@ h1 {
   align-items: center;
   gap: 15px;
   flex-wrap: wrap;
+  position: relative;
+  padding-bottom: 40px;
 }
 
 .upload-card button {
@@ -186,6 +213,52 @@ h1 {
   color: #aaa;
   font-size: 0.95em;
   flex: 1;
+}
+
+/* Upload card input group */
+.upload-card .input-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 10px;
+}
+
+.upload-card .input-group label {
+  font-size: 0.9em;
+  color: #aaa;
+  margin-bottom: 5px;
+}
+
+.upload-card .input-group input[type="text"] {
+  padding: 12px;
+  background: #1b1b1b;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1em;
+  transition: 0.2s;
+}
+
+.upload-card .input-group input[type="text"]::placeholder {
+  color: #555;
+}
+
+.upload-card .input-group input[type="text"]:focus {
+  outline: none;
+  border-color: #555;
+  box-shadow: 0 0 5px #555;
+}
+
+.upload-card h5 {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #b0b0b0;
+  font-weight: normal;
+  font-size: 0.9rem;
+  margin: 0;
 }
 
 /* =========================
@@ -231,71 +304,27 @@ h1 {
   border: 2px solid #555;
   align-self: center;
 }
-/* Upload card input group */
-.upload-card .input-group {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 400px;
-  margin-bottom: 10px;
-}
 
-.upload-card .input-group label {
-  font-size: 0.9em;
-  color: #aaa;
-  margin-bottom: 5px;
-}
-
-.upload-card .input-group input[type="text"] {
-  padding: 12px;
-  background: #1b1b1b;
-  border: 1px solid #333;
-  border-radius: 6px;
-  color: #fff;
-  font-size: 1em;
-  transition: 0.2s;
-}
-
-.upload-card .input-group input[type="text"]::placeholder {
-  color: #555;
-}
-
-.upload-card .input-group input[type="text"]:focus {
-  outline: none;
-  border-color: #555;
-  box-shadow: 0 0 5px #555;
-}
-.upload-card {
-  position: relative; /* Make the card a positioning context */
-  padding-bottom: 40px; /* Give some space for the footer text */
-}
-
-.upload-card h5 {
-  position: absolute;
-  bottom: 10px;       /* distance from the bottom of the card */
-  left: 50%;          /* start at horizontal center */
-  transform: translateX(-50%); /* center it exactly */
-  color: #b0b0b0;     /* light grey color */
-  font-weight: normal; /* optional, makes it lighter */
-  font-size: 0.9rem;   /* optional, smaller text */
-  margin: 0;          /* remove default margin */
-}
+/* =========================
+   DASHBOARD HEADER
+========================= */
 #dashboardPage h1 {
-  text-align: center;      /* centers the text horizontally */
-  margin-top: 20px;        /* optional: spacing from top of page */
-  font-size: 2rem;         /* adjust size if needed */
-  font-weight: bold;       /* optional: make it bold */
+  text-align: center;
+  margin-top: 20px;
+  font-size: 2rem;
+  font-weight: bold;
 }
+
 .dashboard-header {
   display: flex;
-  align-items: center;    /* vertically center text and image */
-  justify-content: center; /* centers the whole group horizontally */
-  gap: 10px;              /* space between image and text */
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   margin-top: 20px;
 }
 
 .dashboard-header h1 {
-  margin: 0;             /* remove default margins */
+  margin: 0;
   font-size: 2rem;
   font-weight: bold;
 }
@@ -305,6 +334,10 @@ h1 {
   height: 80px;
   object-fit: contain;
 }
+
+/* =========================
+   UPLOAD PROGRESS BAR
+========================= */
 #uploadBarContainer {
   width: 100%;
   background: #222;
@@ -320,6 +353,10 @@ h1 {
   background: #4caf50;
   transition: width 0.3s ease;
 }
+
+/* =========================
+   NEW VIDEOS BANNER
+========================= */
 .new-banner {
   display: flex;
   justify-content: space-between;
@@ -346,10 +383,13 @@ h1 {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
 }
-/* badge card like video card */
+
+/* =========================
+   BADGE CARDS
+========================= */
 .badge-card {
   display: flex;
-  flex-direction: column;   /* stack image, title, subtitle */
+  flex-direction: column;
   align-items: center;
   width: 120px;
   height: 160px;
@@ -364,9 +404,9 @@ h1 {
 }
 
 .badge-card img {
-  width: 100%;          /* fill card width */
-  height: 70px;         /* fixed height */
-  object-fit: contain;  /* keep aspect ratio */
+  width: 100%;
+  height: 70px;
+  object-fit: contain;
   border-radius: 6px;
   margin-bottom: 8px;
 }
@@ -381,48 +421,31 @@ h1 {
   font-size: 12px;
   color: #ccc;
 }
-.custom-video{
-width:100%;
-border-radius:8px;
-background:black;
-}
 
-.video-controls{
-display:flex;
-justify-content:center;
-margin-top:6px;
-}
-
-.video-controls button{
-background:#1e1e1e;
-border:none;
-color:white;
-padding:6px 12px;
-border-radius:6px;
-cursor:pointer;
-}
-
-.video-controls button:hover{
-background:#333;
-}
-.search-bar {
+/* =========================
+   VIDEO CONTROLS
+========================= */
+.custom-video {
   width: 100%;
-  padding: 12px 16px;
-  background: #1b1b1b;
-  border: 1px solid #333;
   border-radius: 8px;
-  color: #fff;
-  font-size: 1em;
-  margin-bottom: 16px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  background: black;
 }
 
-.search-bar::placeholder {
-  color: #555;
+.video-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 6px;
 }
 
-.search-bar:focus {
-  outline: none;
-  border-color: #555;
-  box-shadow: 0 0 5px #555;
+.video-controls button {
+  background: #1e1e1e;
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.video-controls button:hover {
+  background: #333;
 }
