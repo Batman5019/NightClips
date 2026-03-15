@@ -423,8 +423,70 @@ h1 {
 }
 
 /* =========================
-   VIDEO CONTROLS
+   RESPONSIVE / MOBILE
 ========================= */
+@media (max-width: 600px) {
+  .container {
+    padding: 12px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-logo {
+    width: 52px;
+    height: 52px;
+  }
+
+  .tabs {
+    gap: 6px;
+  }
+
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 0.85em;
+  }
+
+  .video-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-container input,
+  .auth-container button {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .upload-card {
+    padding: 16px;
+    padding-bottom: 44px;
+  }
+
+  .upload-card .input-group {
+    max-width: 100%;
+  }
+
+  .profile-card {
+    max-width: 100%;
+  }
+
+  .search-bar {
+    font-size: 0.95em;
+  }
+}
+
+@media (max-width: 400px) {
+  .tab-btn {
+    padding: 7px 9px;
+    font-size: 0.78em;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.2rem;
+  }
+}
+
 .custom-video {
   width: 100%;
   border-radius: 8px;
