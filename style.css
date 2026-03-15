@@ -1,504 +1,420 @@
 /* =========================
    SPLASH SCREEN
 ========================= */
-
-#splash{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:#000;
-display:flex;
-justify-content:center;
-align-items:center;
-z-index:999999;
-transition:opacity .45s ease, visibility .45s;
+#splash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
 }
 
-#splash img{
-width:120px;
+#splash img {
+  width: 120px;
 }
-
-#splash.hide{
-opacity:0;
-visibility:hidden;
-pointer-events:none;
-}
-
 
 /* =========================
    GLOBAL
 ========================= */
-
-*{
-box-sizing:border-box;
-font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-body{
-margin:0;
-background:#0f0f0f;
-color:#eee;
+body {
+  margin: 0;
+  background: #0f0f0f;
+  color: #eee;
 }
-
 
 /* =========================
    AUTH PAGE
 ========================= */
-
-.auth-container{
-height:100vh;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-gap:15px;
+.auth-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
 }
 
-.auth-container h1{
-font-size:2em;
-color:#fff;
-margin-bottom:10px;
+.auth-container h1 {
+  font-size: 2em;
+  color: #fff;
+  margin-bottom: 10px;
 }
 
-.auth-container input{
-width:280px;
-padding:12px;
-background:#1b1b1b;
-border:1px solid #333;
-border-radius:6px;
-color:#fff;
-font-size:1em;
+.auth-container input {
+  width: 280px;
+  padding: 12px;
+  background: #1b1b1b;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1em;
 }
 
-.auth-container button{
-width:280px;
-padding:12px;
-background:#2c2c2c;
-border:none;
-border-radius:6px;
-color:#fff;
-cursor:pointer;
-font-weight:bold;
-transition:background .2s;
+.auth-container button {
+  width: 280px;
+  padding: 12px;
+  background: #2c2c2c;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
 }
 
-.auth-container button:hover{
-background:#3c3c3c;
+.auth-container button:hover {
+  background: #3c3c3c;
 }
 
-.auth-container p{
-color:#ff6666;
-font-weight:bold;
-height:20px;
+.auth-container p {
+  color: #ff6666;
+  font-weight: bold;
+  height: 20px;
 }
-
-
-/* =========================
-   DASHBOARD
-========================= */
-
-.container{
-padding:20px;
-max-width:1200px;
-margin:0 auto;
-}
-
-h1{
-margin-bottom:15px;
-color:#fff;
-}
-
-
-/* =========================
-   TABS
-========================= */
-
-.tabs{
-display:flex;
-gap:10px;
-margin-bottom:20px;
-flex-wrap:wrap;
-}
-
-.tab-btn{
-background:#1c1c1c;
-color:#aaa;
-border:none;
-padding:10px 20px;
-border-radius:6px;
-cursor:pointer;
-font-weight:bold;
-transition:.2s;
-}
-
-.tab-btn:hover{
-background:#2a2a2a;
-color:#fff;
-}
-
-.tab-btn.active{
-background:#333;
-color:#fff;
-}
-
-
-/* =========================
-   SEARCH BAR
-========================= */
-
-.search-bar{
-width:100%;
-padding:12px 16px;
-background:#1b1b1b;
-border:1px solid #333;
-border-radius:8px;
-color:#fff;
-font-size:1em;
-margin-bottom:16px;
-transition:border-color .2s, box-shadow .2s;
-}
-
-.search-bar::placeholder{
-color:#555;
-}
-
-.search-bar:focus{
-outline:none;
-border-color:#555;
-box-shadow:0 0 5px #555;
-}
-
-
-/* =========================
-   VIDEO GRID / CARDS
-========================= */
-
-.video-grid{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-gap:15px;
-}
-
-.card{
-background:#1a1a1a;
-padding:10px;
-border-radius:8px;
-display:flex;
-flex-direction:column;
-gap:8px;
-transition:transform .2s, box-shadow .2s;
-}
-
-.card:hover{
-transform:translateY(-3px);
-box-shadow:0 5px 15px rgba(0,0,0,.5);
-}
-
-.card video{
-width:100%;
-border-radius:6px;
-background:#000;
-}
-
-.card a,
-.card button{
-background:#2b2b2b;
-color:#fff;
-border:none;
-padding:6px 10px;
-border-radius:5px;
-cursor:pointer;
-text-align:center;
-text-decoration:none;
-font-size:.9em;
-}
-
-.card a:hover,
-.card button:hover{
-background:#3b3b3b;
-}
-
-
-/* =========================
-   UPLOAD CARD
-========================= */
-
-.upload-card{
-background:#141414;
-padding:20px;
-border-radius:10px;
-display:flex;
-align-items:center;
-gap:15px;
-flex-wrap:wrap;
-position:relative;
-padding-bottom:40px;
-}
-
-.upload-card button{
-background:#2b2b2b;
-padding:12px 20px;
-border-radius:6px;
-font-weight:bold;
-border:none;
-color:#fff;
-cursor:pointer;
-transition:.2s;
-}
-
-.upload-card button:hover{
-background:#3b3b3b;
-}
-
-#fileName{
-color:#aaa;
-font-size:.95em;
-flex:1;
-}
-
-.upload-card .input-group{
-display:flex;
-flex-direction:column;
-width:100%;
-max-width:400px;
-margin-bottom:10px;
-}
-
-.upload-card .input-group label{
-font-size:.9em;
-color:#aaa;
-margin-bottom:5px;
-}
-
-.upload-card .input-group input[type="text"]{
-padding:12px;
-background:#1b1b1b;
-border:1px solid #333;
-border-radius:6px;
-color:#fff;
-font-size:1em;
-transition:.2s;
-}
-
-.upload-card .input-group input[type="text"]::placeholder{
-color:#555;
-}
-
-.upload-card .input-group input[type="text"]:focus{
-outline:none;
-border-color:#555;
-box-shadow:0 0 5px #555;
-}
-
-.upload-card h5{
-position:absolute;
-bottom:10px;
-left:50%;
-transform:translateX(-50%);
-color:#b0b0b0;
-font-weight:normal;
-font-size:.9rem;
-margin:0;
-}
-
-
-/* =========================
-   PROFILE CARD
-========================= */
-
-.profile-card{
-background:#141414;
-padding:20px;
-border-radius:10px;
-max-width:400px;
-display:flex;
-flex-direction:column;
-gap:12px;
-}
-
-.profile-card input{
-padding:10px;
-background:#1e1e1e;
-border:1px solid #333;
-border-radius:6px;
-color:#fff;
-}
-
-.profile-card button{
-padding:12px;
-background:#2b2b2b;
-color:#fff;
-border:none;
-border-radius:6px;
-font-weight:bold;
-cursor:pointer;
-transition:.2s;
-}
-
-.profile-card button:hover{
-background:#3b3b3b;
-}
-
-.profile-card img{
-margin-top:10px;
-max-width:120px;
-border-radius:50%;
-border:2px solid #555;
-align-self:center;
-}
-
 
 /* =========================
    DASHBOARD HEADER
 ========================= */
-
-#dashboardPage h1{
-text-align:center;
-margin-top:20px;
-font-size:2rem;
-font-weight:bold;
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  cursor: pointer;
 }
 
-.dashboard-header{
-display:flex;
-align-items:center;
-justify-content:center;
-gap:10px;
-margin-top:20px;
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: bold;
 }
 
-.dashboard-header h1{
-margin:0;
-font-size:2rem;
-font-weight:bold;
+.dashboard-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
 }
-
-.dashboard-logo{
-width:80px;
-height:80px;
-object-fit:contain;
-}
-
 
 /* =========================
-   UPLOAD PROGRESS BAR
+   TABS
 ========================= */
-
-#uploadBarContainer{
-width:100%;
-background:#222;
-border-radius:6px;
-overflow:hidden;
-height:12px;
-margin-top:10px;
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
-#uploadBar{
-width:0%;
-height:100%;
-background:#4caf50;
-transition:width .3s ease;
+.tab-btn {
+  background: #1c1c1c;
+  color: #aaa;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
 }
 
+.tab-btn:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.tab-btn.active {
+  background: #333;
+  color: #fff;
+}
+
+#toggleGridBtn {
+  background: #444;
+  color: #fff;
+}
+
+#toggleGridBtn:hover {
+  background: #555;
+}
 
 /* =========================
-   NEW VIDEOS BANNER
+   SEARCH BAR
 ========================= */
-
-.new-banner{
-display:flex;
-justify-content:space-between;
-align-items:center;
-background:#1e1e1e;
-padding:10px 15px;
-border-radius:8px;
-margin-bottom:10px;
-color:white;
-font-weight:bold;
-animation:slideDown .3s ease;
+.search-bar {
+  width: 100%;
+  padding: 12px 16px;
+  background: #1b1b1b;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1em;
+  margin-bottom: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.new-banner button{
-background:#4cafef;
-border:none;
-padding:6px 12px;
-border-radius:6px;
-cursor:pointer;
-font-weight:bold;
+.search-bar::placeholder {
+  color: #555;
 }
 
-@keyframes slideDown{
-from{opacity:0;transform:translateY(-5px);}
-to{opacity:1;transform:translateY(0);}
+.search-bar:focus {
+  outline: none;
+  border-color: #555;
+  box-shadow: 0 0 5px #555;
 }
-
 
 /* =========================
-   BADGE CARDS
+   VIDEO GRID / LIST
 ========================= */
-
-.badge-card{
-display:flex;
-flex-direction:column;
-align-items:center;
-width:120px;
-height:160px;
-background:#1e1e1e;
-border-radius:10px;
-overflow:hidden;
-box-shadow:0 4px 6px rgba(0,0,0,.3);
-text-align:center;
-padding:8px;
-color:white;
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
 }
 
-.badge-card img{
-width:100%;
-height:70px;
-object-fit:contain;
-border-radius:6px;
-margin-bottom:8px;
+.video-grid.list-view {
+  display: flex;
+  flex-direction: column;
 }
 
-.badge-card .badge-title{
-font-weight:bold;
-font-size:14px;
-margin-bottom:2px;
+/* CARD */
+.card {
+  background: #1a1a1a;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.badge-card .badge-subtitle{
-font-size:12px;
-color:#ccc;
+.card.list-view {
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
 }
 
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.card video {
+  width: 100%;
+  border-radius: 6px;
+  background: #000;
+}
+
+.card.list-view video {
+  width: 200px;
+  height: 120px;
+}
+
+/* Download / Delete buttons inside card */
+.card a, .card button {
+  background: #2b2b2b;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  font-size: 0.9em;
+}
+
+.card a:hover, .card button:hover {
+  background: #3b3b3b;
+}
 
 /* =========================
-   VIDEO PLAYER
+   UPLOAD CARD
 ========================= */
-
-.custom-video{
-width:100%;
-border-radius:8px;
-background:black;
+.upload-card {
+  background: #141414;
+  padding: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  position: relative;
+  padding-bottom: 40px;
 }
 
-.video-controls{
-display:flex;
-justify-content:center;
-margin-top:6px;
+.upload-card button {
+  background: #2b2b2b;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-.video-controls button{
-background:#1e1e1e;
-border:none;
-color:white;
-padding:6px 12px;
-border-radius:6px;
-cursor:pointer;
+.upload-card button:hover {
+  background: #3b3b3b;
 }
 
-.video-controls button:hover{
-background:#333;
+#fileName, #thumbnailFileName {
+  color: #aaa;
+  font-size: 0.95em;
+  flex: 1;
+}
+
+/* Upload card input group */
+.upload-card .input-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 10px;
+}
+
+.upload-card .input-group label {
+  font-size: 0.9em;
+  color: #aaa;
+  margin-bottom: 5px;
+}
+
+.upload-card .input-group input[type="text"] {
+  padding: 12px;
+  background: #1b1b1b;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1em;
+  transition: 0.2s;
+}
+
+.upload-card .input-group input[type="text"]::placeholder {
+  color: #555;
+}
+
+.upload-card .input-group input[type="text"]:focus {
+  outline: none;
+  border-color: #555;
+  box-shadow: 0 0 5px #555;
+}
+
+.upload-card h5 {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #b0b0b0;
+  font-weight: normal;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* =========================
+   PROFILE CARD
+========================= */
+.profile-card {
+  background: #141414;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-card input {
+  padding: 10px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+}
+
+.profile-card button {
+  padding: 12px;
+  background: #2b2b2b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.profile-card button:hover {
+  background: #3b3b3b;
+}
+
+.profile-card img {
+  margin-top: 10px;
+  max-width: 120px;
+  border-radius: 50%;
+  border: 2px solid #555;
+  align-self: center;
+}
+
+/* =========================
+   WATCH PAGE
+========================= */
+#watchPage {
+  display: none;
+  width: 100%;
+}
+
+.watch-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.main-video {
+  flex: 3;
+  min-width: 400px;
+}
+
+.related-videos {
+  flex: 1;
+  min-width: 200px;
+}
+
+#commentsSection {
+  margin-top: 15px;
+  background: #1a1a1a;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+#commentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.comment {
+  background: #2b2b2b;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 900px) {
+  .watch-container {
+    flex-direction: column;
+  }
+  .related-videos {
+    order: 2;
+  }
+  .main-video {
+    order: 1;
+  }
 }
