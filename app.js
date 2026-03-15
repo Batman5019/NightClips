@@ -26,6 +26,9 @@ supabaseClient
   )
   .subscribe();
 
+window.addEventListener("load", () => {
+  document.getElementById("splash").style.display = "none";
+});
 // =====================
 // BADGES DEFINITIONS
 // =====================
