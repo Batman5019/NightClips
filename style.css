@@ -24,10 +24,17 @@ body {
   gap: 15px;
 }
 
+.auth-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  margin-bottom: 4px;
+}
+
 .auth-container h1 {
   font-size: 2em;
   color: #fff;
-  margin-bottom: 10px;
+  margin: 0 0 6px;
 }
 
 .auth-container input {
@@ -60,6 +67,7 @@ body {
   color: #ff6666;
   font-weight: bold;
   height: 20px;
+  margin: 0;
 }
 
 /* =========================
@@ -77,24 +85,82 @@ h1 {
 }
 
 /* =========================
+   HEADER
+========================= */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  margin-bottom: 4px;
+  position: relative;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.dashboard-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+/* Header profile pill (top-right of header) */
+.header-profile {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1c1c1c;
+  border: 1px solid #333;
+  border-radius: 20px;
+  padding: 4px 10px 4px 4px;
+}
+
+.header-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #555;
+  background: #333;
+}
+
+.header-username {
+  font-size: 0.85em;
+  color: #ccc;
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================
    TABS
 ========================= */
 .tabs {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 20px;
   flex-wrap: wrap;
+  margin-top: 16px;
 }
 
 .tab-btn {
   background: #1c1c1c;
   color: #aaa;
   border: none;
-  padding: 10px 20px;
+  padding: 10px 18px;
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
   transition: 0.2s;
+  font-size: 0.9em;
 }
 
 .tab-btn:hover {
@@ -153,7 +219,7 @@ h1 {
 
 .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 }
 
 .card video {
@@ -162,7 +228,58 @@ h1 {
   background: #000;
 }
 
-/* Download / Delete buttons inside card */
+/* Card title row: avatar + text */
+.card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-uploader-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #444;
+  flex-shrink: 0;
+  background: #333;
+}
+
+.card-uploader-avatar-placeholder {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #aaa;
+  flex-shrink: 0;
+  border: 1px solid #444;
+}
+
+.card-title-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-title-text .vid-title {
+  font-weight: bold;
+  font-size: 0.95em;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-title-text .vid-uploader {
+  font-size: 0.78em;
+  color: #888;
+  margin: 2px 0 0;
+}
+
+/* Buttons inside card */
 .card a, .card button {
   background: #2b2b2b;
   color: #fff;
@@ -180,6 +297,52 @@ h1 {
 }
 
 /* =========================
+   FILE PICK ROWS & BUTTONS
+========================= */
+.file-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.file-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #232323;
+  border: 1px solid #3a3a3a;
+  color: #ddd;
+  padding: 9px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.file-btn:hover {
+  background: #2e2e2e;
+  border-color: #555;
+  color: #fff;
+}
+
+.file-btn svg {
+  flex-shrink: 0;
+}
+
+.file-name-label {
+  color: #777;
+  font-size: 0.88em;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================
    UPLOAD CARD
 ========================= */
 .upload-card {
@@ -187,51 +350,61 @@ h1 {
   padding: 20px;
   border-radius: 10px;
   display: flex;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 14px;
   position: relative;
-  padding-bottom: 40px;
+  padding-bottom: 48px;
 }
 
-.upload-card button {
+.upload-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: #2b2b2b;
-  padding: 12px 20px;
-  border-radius: 6px;
-  font-weight: bold;
-  border: none;
+  border: 1px solid #3a3a3a;
   color: #fff;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.upload-card button:hover {
-  background: #3b3b3b;
-}
-
-#fileName {
-  color: #aaa;
+  padding: 11px 22px;
+  border-radius: 8px;
+  font-weight: bold;
   font-size: 0.95em;
-  flex: 1;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  width: fit-content;
 }
 
-/* Upload card input group */
-.upload-card .input-group {
+.upload-submit-btn:hover {
+  background: #383838;
+  border-color: #555;
+}
+
+.upload-card h5 {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #b0b0b0;
+  font-weight: normal;
+  font-size: 0.85rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* Input group used in upload + profile */
+.input-group {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 400px;
-  margin-bottom: 10px;
+  max-width: 420px;
+  gap: 5px;
 }
 
-.upload-card .input-group label {
-  font-size: 0.9em;
+.input-group label {
+  font-size: 0.88em;
   color: #aaa;
-  margin-bottom: 5px;
 }
 
-.upload-card .input-group input[type="text"] {
-  padding: 12px;
+.input-group input[type="text"] {
+  padding: 11px 12px;
   background: #1b1b1b;
   border: 1px solid #333;
   border-radius: 6px;
@@ -240,111 +413,25 @@ h1 {
   transition: 0.2s;
 }
 
-.upload-card .input-group input[type="text"]::placeholder {
+.input-group input[type="text"]::placeholder {
   color: #555;
 }
 
-.upload-card .input-group input[type="text"]:focus {
+.input-group input[type="text"]:focus {
   outline: none;
   border-color: #555;
   box-shadow: 0 0 5px #555;
 }
 
-.upload-card h5 {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #b0b0b0;
-  font-weight: normal;
-  font-size: 0.9rem;
-  margin: 0;
-}
-
 /* =========================
-   PROFILE CARD
-========================= */
-.profile-card {
-  background: #141414;
-  padding: 20px;
-  border-radius: 10px;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.profile-card input {
-  padding: 10px;
-  background: #1e1e1e;
-  border: 1px solid #333;
-  border-radius: 6px;
-  color: #fff;
-}
-
-.profile-card button {
-  padding: 12px;
-  background: #2b2b2b;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.profile-card button:hover {
-  background: #3b3b3b;
-}
-
-.profile-card img {
-  margin-top: 10px;
-  max-width: 120px;
-  border-radius: 50%;
-  border: 2px solid #555;
-  align-self: center;
-}
-
-/* =========================
-   DASHBOARD HEADER
-========================= */
-#dashboardPage h1 {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 2rem;
-  font-weight: bold;
-}
-
-.dashboard-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.dashboard-header h1 {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: bold;
-}
-
-.dashboard-logo {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-}
-
-/* =========================
-   UPLOAD PROGRESS BAR
+   UPLOAD BAR
 ========================= */
 #uploadBarContainer {
   width: 100%;
   background: #222;
   border-radius: 6px;
   overflow: hidden;
-  height: 12px;
-  margin-top: 10px;
+  height: 10px;
 }
 
 #uploadBar {
@@ -352,6 +439,67 @@ h1 {
   height: 100%;
   background: #4caf50;
   transition: width 0.3s ease;
+}
+
+#uploadMessage {
+  color: #aaa;
+  font-size: 0.9em;
+  margin: 0;
+  min-height: 18px;
+}
+
+/* =========================
+   PROFILE CARD
+========================= */
+.profile-card {
+  background: #141414;
+  padding: 24px 20px;
+  border-radius: 10px;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-avatar-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.profile-avatar-big {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #555;
+}
+
+.profile-avatar-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: #2a2a2a;
+  border: 2px dashed #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #555;
+}
+
+.profile-uid {
+  color: #777;
+  font-size: 0.85em;
+  margin: 0;
+}
+
+#profileMessage {
+  color: #4caf50;
+  font-weight: bold;
+  font-size: 0.9em;
+  min-height: 18px;
+  margin: 0;
 }
 
 /* =========================
@@ -381,7 +529,7 @@ h1 {
 
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* =========================
@@ -400,7 +548,6 @@ h1 {
   text-align: center;
   padding: 8px;
   color: white;
-  font-family: sans-serif;
 }
 
 .badge-card img {
@@ -423,70 +570,8 @@ h1 {
 }
 
 /* =========================
-   RESPONSIVE / MOBILE
+   VIDEO PLAYER
 ========================= */
-@media (max-width: 600px) {
-  .container {
-    padding: 12px;
-  }
-
-  .dashboard-header h1 {
-    font-size: 1.5rem;
-  }
-
-  .dashboard-logo {
-    width: 52px;
-    height: 52px;
-  }
-
-  .tabs {
-    gap: 6px;
-  }
-
-  .tab-btn {
-    padding: 8px 12px;
-    font-size: 0.85em;
-  }
-
-  .video-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .auth-container input,
-  .auth-container button {
-    width: 100%;
-    max-width: 320px;
-  }
-
-  .upload-card {
-    padding: 16px;
-    padding-bottom: 44px;
-  }
-
-  .upload-card .input-group {
-    max-width: 100%;
-  }
-
-  .profile-card {
-    max-width: 100%;
-  }
-
-  .search-bar {
-    font-size: 0.95em;
-  }
-}
-
-@media (max-width: 400px) {
-  .tab-btn {
-    padding: 7px 9px;
-    font-size: 0.78em;
-  }
-
-  .dashboard-header h1 {
-    font-size: 1.2rem;
-  }
-}
-
 .custom-video {
   width: 100%;
   border-radius: 8px;
@@ -510,4 +595,73 @@ h1 {
 
 .video-controls button:hover {
   background: #333;
+}
+
+/* =========================
+   RESPONSIVE / MOBILE
+========================= */
+@media (max-width: 600px) {
+  .container {
+    padding: 12px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .dashboard-logo {
+    width: 44px;
+    height: 44px;
+  }
+
+  .header-username {
+    display: none;
+  }
+
+  .tabs {
+    gap: 5px;
+  }
+
+  .tab-btn {
+    padding: 8px 10px;
+    font-size: 0.8em;
+  }
+
+  .video-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-container input,
+  .auth-container button {
+    width: 90%;
+    max-width: 320px;
+  }
+
+  .upload-card {
+    padding: 14px;
+    padding-bottom: 44px;
+  }
+
+  .input-group {
+    max-width: 100%;
+  }
+
+  .profile-card {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .tab-btn {
+    padding: 7px 8px;
+    font-size: 0.75em;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.1rem;
+  }
+
+  .header-profile {
+    display: none !important;
+  }
 }
