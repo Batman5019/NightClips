@@ -600,9 +600,26 @@ h1 {
 /* =========================
    RESPONSIVE / MOBILE
 ========================= */
-@media (max-width: 600px) {
+
+/* Prevent any horizontal overflow on the whole page */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
   .container {
-    padding: 12px;
+    padding: 10px;
+    width: 100%;
+  }
+
+  /* Header — stack logo + title, hide profile pill */
+  .dashboard-header {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 0 8px;
   }
 
   .dashboard-header h1 {
@@ -610,58 +627,138 @@ h1 {
   }
 
   .dashboard-logo {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
   }
 
-  .header-username {
+  .header-profile {
+    display: none !important;
+  }
+
+  /* Tabs — scrollable single row, no wrap */
+  .tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
     display: none;
   }
 
-  .tabs {
-    gap: 5px;
-  }
-
   .tab-btn {
-    padding: 8px 10px;
-    font-size: 0.8em;
+    flex-shrink: 0;
+    padding: 9px 14px;
+    font-size: 0.82em;
+    white-space: nowrap;
   }
 
+  /* Gallery — single column */
   .video-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
-  .auth-container input,
-  .auth-container button {
-    width: 90%;
-    max-width: 320px;
+  /* Cards — full width, bigger touch targets */
+  .card a, .card button {
+    padding: 10px;
+    font-size: 0.88em;
   }
 
+  /* Search bar */
+  .search-bar {
+    font-size: 0.95em;
+    padding: 11px 14px;
+  }
+
+  /* Upload card */
   .upload-card {
     padding: 14px;
-    padding-bottom: 44px;
+    padding-bottom: 48px;
+    gap: 12px;
   }
 
   .input-group {
     max-width: 100%;
   }
 
+  .input-group input[type="text"] {
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+
+  .file-pick-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .file-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 11px 16px;
+    font-size: 0.9em;
+  }
+
+  .file-name-label {
+    width: 100%;
+    text-align: center;
+  }
+
+  .upload-submit-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 13px;
+  }
+
+  /* Profile card */
   .profile-card {
     max-width: 100%;
+    padding: 16px;
+  }
+
+  /* Auth page */
+  .auth-container {
+    padding: 20px;
+    gap: 12px;
+  }
+
+  .auth-container input,
+  .auth-container button {
+    width: 100%;
+    max-width: 340px;
+    font-size: 16px; /* prevents iOS zoom */
+  }
+
+  /* Badges */
+  #badgesList {
+    gap: 8px !important;
+  }
+
+  .badge-card {
+    width: 100px;
+    height: 145px;
   }
 }
 
 @media (max-width: 380px) {
-  .tab-btn {
-    padding: 7px 8px;
-    font-size: 0.75em;
-  }
-
   .dashboard-header h1 {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
   }
 
-  .header-profile {
-    display: none !important;
+  .tab-btn {
+    padding: 8px 10px;
+    font-size: 0.78em;
+  }
+
+  .card-uploader-avatar,
+  .card-uploader-avatar-placeholder {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
   }
 }
