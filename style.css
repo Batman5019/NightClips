@@ -205,6 +205,8 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 15px;
+  width: 100%;
+  min-width: 0;
 }
 
 .card {
@@ -215,6 +217,9 @@ h1 {
   flex-direction: column;
   gap: 8px;
   transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .card:hover {
@@ -224,8 +229,16 @@ h1 {
 
 .card video {
   width: 100%;
+  max-width: 100%;
   border-radius: 6px;
   background: #000;
+  display: block;
+}
+
+.video-container {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 6px;
 }
 
 /* Card title row: avatar + text */
