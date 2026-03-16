@@ -188,7 +188,6 @@ async function init() {
   await loadGallery();
   await loadLibrary();
   await updateBadges();
-  await migrateOldTitles(); // fix existing titles to new format
 }
 
 init();
@@ -523,6 +522,64 @@ async function buildCardTitleRow(file) {
 }
 
 // =====================
+// BATCH FETCH ALL USER RECORDS NEEDED FOR A LIST OF UPLOADS
+// =====================
+async function fetchUsersForUploads(uploads) {
+  const uniqueIds = [...new Set(uploads.map((u) => u.user_id))];
+  const { data, error } = await supabaseClient
+    .from("users").select("id, username, profile_pic_url").in("id", uniqueIds);
+  if (error) { console.error("Error batch-fetching users:", error); return {}; }
+  const map = {};
+  (data || []).forEach((u) => {
+    map[u.id] = u;
+    profilePicCache[u.id] = u.profile_pic_url || null;
+  });
+  return map;
+}
+
+// Build title row synchronously using pre-fetched user map
+function buildCardTitleRowSync(file, userMap) {
+  const row = document.createElement("div");
+  row.className = "card-title-row";
+
+  const user = userMap[file.user_id];
+  const picUrl = user?.profile_pic_url || null;
+  const username = user?.username || null;
+
+  if (picUrl) {
+    const av = document.createElement("img");
+    av.src = picUrl;
+    av.className = "card-uploader-avatar";
+    av.alt = "";
+    row.appendChild(av);
+  } else {
+    const av = document.createElement("div");
+    av.className = "card-uploader-avatar-placeholder";
+    av.textContent = "?";
+    row.appendChild(av);
+  }
+
+  const textWrap = document.createElement("div");
+  textWrap.className = "card-title-text";
+
+  const titleEl = document.createElement("p");
+  titleEl.className = "vid-title";
+  // Strip legacy [username] suffix if still present
+  titleEl.textContent = (file.title || "").replace(/\s*\[.+\]\s*$/, "").trim();
+  textWrap.appendChild(titleEl);
+
+  if (username) {
+    const uploaderEl = document.createElement("p");
+    uploaderEl.className = "vid-uploader";
+    uploaderEl.textContent = username;
+    textWrap.appendChild(uploaderEl);
+  }
+
+  row.appendChild(textWrap);
+  return row;
+}
+
+// =====================
 // LOAD GALLERY (ALL VIDEOS)
 // =====================
 async function loadGallery() {
@@ -538,14 +595,17 @@ async function loadGallery() {
     latestUploadTime = newest;
   }
 
+  // Batch-fetch all uploaders in one query
+  const userMap = uploads.length > 0 ? await fetchUsersForUploads(uploads) : {};
+
   allVideos.innerHTML = "";
   const { data: authData } = await supabaseClient.auth.getUser();
 
-  for (const file of uploads) {
+  uploads.forEach((file) => {
     const url = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
     const card = document.createElement("div");
     card.className = "card";
-    card.dataset.title = (file.title || "").toLowerCase();
+    card.dataset.title = (file.title || "").replace(/\s*\[.+\]\s*$/, "").trim().toLowerCase();
 
     if (file.thumbnail_path) {
       const thumbUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.thumbnail_path).data.publicUrl;
@@ -558,9 +618,7 @@ async function loadGallery() {
       card.appendChild(createVideoCardContent(url));
     }
 
-    // [avatar] Title + username row
-    const titleRow = await buildCardTitleRow(file);
-    card.appendChild(titleRow);
+    card.appendChild(buildCardTitleRowSync(file, userMap));
 
     const dl = document.createElement("a");
     dl.href = url;
@@ -586,7 +644,7 @@ async function loadGallery() {
     }
 
     allVideos.appendChild(card);
-  }
+  });
 
   const searchInput = document.getElementById("searchInput");
   if (searchInput && searchInput.value.trim()) filterGallery(searchInput.value);
@@ -622,7 +680,9 @@ async function loadLibrary() {
     .from("uploads").select("*").eq("user_id", authData.user.id).order("created_at", { ascending: false });
   if (error) { console.error(error); return; }
 
-  for (const file of uploads) {
+  const userMap = uploads.length > 0 ? await fetchUsersForUploads(uploads) : {};
+
+  uploads.forEach((file) => {
     const url = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
     const card = document.createElement("div");
     card.className = "card";
@@ -638,8 +698,7 @@ async function loadLibrary() {
       card.appendChild(createVideoCardContent(url));
     }
 
-    const titleRow = await buildCardTitleRow(file);
-    card.appendChild(titleRow);
+    card.appendChild(buildCardTitleRowSync(file, userMap));
 
     const dl = document.createElement("a");
     dl.href = url;
@@ -663,7 +722,7 @@ async function loadLibrary() {
     card.appendChild(delBtn);
 
     userVideos.appendChild(card);
-  }
+  });
 }
 
 // =====================
