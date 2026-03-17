@@ -36,12 +36,19 @@
     <!-- VIDEO INFO -->
     <div class="watch-info">
       <h1 id="watchTitle" class="watch-title"></h1>
+
       <div class="watch-meta">
         <div class="watch-uploader" id="watchUploader">
           <div id="watchAvatarWrap"></div>
           <span id="watchUsername"></span>
         </div>
-        <a id="watchDownload" class="watch-download-btn" download>Download</a>
+
+        <!-- NEW: actions -->
+        <div class="watch-actions">
+          <button id="likeBtn" class="react-btn" type="button">👍 <span id="likeCount">0</span></button>
+          <button id="dislikeBtn" class="react-btn" type="button">👎 <span id="dislikeCount">0</span></button>
+          <a id="watchDownload" class="watch-download-btn" download>Download</a>
+        </div>
       </div>
     </div>
 
