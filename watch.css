@@ -1,460 +1,427 @@
-/* =========================
-   GLOBAL
-========================= */
-* {
-  box-sizing: border-box;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+const { createClient } = supabase;
+
+const supabaseClient = createClient(
+  "https://olyuzdwaeilrxvqfsgju.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9seXV6ZHdhZWlscnh2cWZzZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjQ1ODAsImV4cCI6MjA4NjYwMDU4MH0.wVynFRV7IWKZwp3kl7PO6B5uWP535CoojZ9wVxcsJM4"
+);
+
+// =====================
+// HELPERS
+// =====================
+const params   = new URLSearchParams(window.location.search);
+const videoId  = params.get("id");
+
+function cleanTitle(t) {
+  return (t || "").replace(/\s*\[.+\]\s*$/, "").trim();
 }
 
-html, body {
-  margin: 0;
-  background: #0a0a0a;
-  color: #eee;
-  overflow-x: hidden;
+async function getUserRecord(userId) {
+  const { data } = await supabaseClient
+    .from("users").select("id, username, profile_pic_url").eq("id", userId).single();
+  return data || null;
 }
 
-/* =========================
-   TOP NAV
-========================= */
-.watch-nav {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: #0f0f0f;
-  border-bottom: 1px solid #1e1e1e;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
+function makeAvatar(picUrl, size = 36) {
+  if (picUrl) {
+    const img = document.createElement("img");
+    img.src = picUrl;
+    img.className = "watch-avatar";
+    img.style.width = size + "px";
+    img.style.height = size + "px";
+    return img;
+  }
+  const div = document.createElement("div");
+  div.className = "watch-avatar-placeholder";
+  div.style.width = size + "px";
+  div.style.height = size + "px";
+  div.textContent = "?";
+  return div;
 }
 
-.nav-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: #fff;
-  font-size: 1.2rem;
-  font-weight: bold;
-  transition: opacity 0.2s;
+async function getAuthUser() {
+  const { data } = await supabaseClient.auth.getUser();
+  return data?.user || null;
 }
 
-.nav-logo:hover {
-  opacity: 0.8;
+// =====================
+// VIEWS + REACTIONS
+// =====================
+function getFingerprint() {
+  const key = "nc_fp";
+  let fp = localStorage.getItem(key);
+  if (!fp) {
+    fp = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+    localStorage.setItem(key, fp);
+  }
+  return fp;
 }
 
-.nav-logo-img {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-  border-radius: 6px;
+async function recordView(uploadId, authUser) {
+  // De-dupe: 1 view/device per upload per 6 hours
+  const k = `nc_view_${uploadId}`;
+  const last = Number(localStorage.getItem(k) || "0");
+  const now = Date.now();
+  if (now - last < 6 * 60 * 60 * 1000) return;
+  localStorage.setItem(k, String(now));
+
+  await supabaseClient.from("upload_views").insert({
+    upload_id: uploadId,
+    viewer_id: authUser?.id || null,
+    viewer_fingerprint: getFingerprint(),
+  });
 }
 
-/* =========================
-   LAYOUT
-========================= */
-.watch-layout {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 24px;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 24px 20px 40px;
+async function getReactionCounts(uploadId) {
+  const { data, error } = await supabaseClient
+    .from("upload_reactions")
+    .select("value")
+    .eq("upload_id", uploadId);
+
+  if (error) return { likes: 0, dislikes: 0 };
+  let likes = 0, dislikes = 0;
+  (data || []).forEach(r => (r.value === 1 ? likes++ : dislikes++));
+  return { likes, dislikes };
 }
 
-/* =========================
-   VIDEO PLAYER
-========================= */
-.watch-player-wrap {
-  width: 100%;
-  background: #000;
-  border-radius: 10px;
-  overflow: hidden;
-  aspect-ratio: 16 / 9;
+async function getMyReaction(uploadId, authUser) {
+  if (!authUser) return 0;
+  const { data } = await supabaseClient
+    .from("upload_reactions")
+    .select("value")
+    .eq("upload_id", uploadId)
+    .eq("user_id", authUser.id)
+    .maybeSingle();
+  return data?.value || 0;
 }
 
-.watch-video {
-  width: 100%;
-  height: 100%;
-  display: block;
-  background: #000;
-}
+async function setReaction(uploadId, authUser, value) {
+  if (!authUser) return;
 
-/* =========================
-   VIDEO INFO
-========================= */
-.watch-info {
-  padding: 14px 0 10px;
-  border-bottom: 1px solid #1a1a1a;
-  margin-bottom: 20px;
-}
+  const current = await getMyReaction(uploadId, authUser);
 
-.watch-title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin: 0 0 12px;
-  color: #fff;
-  line-height: 1.4;
-}
-
-.watch-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.watch-uploader {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.watch-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #333;
-  background: #222;
-}
-
-.watch-avatar-placeholder {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #222;
-  border: 1px solid #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #555;
-  font-size: 14px;
-}
-
-#watchUsername {
-  font-size: 0.95em;
-  color: #ccc;
-  font-weight: 600;
-}
-
-.watch-download-btn {
-  background: #1e1e1e;
-  border: 1px solid #2e2e2e;
-  color: #ccc;
-  padding: 8px 18px;
-  border-radius: 7px;
-  text-decoration: none;
-  font-size: 0.88em;
-  font-weight: 600;
-  transition: background 0.2s, color 0.2s;
-}
-
-.watch-download-btn:hover {
-  background: #272727;
-  color: #fff;
-}
-
-/* =========================
-   COMMENTS
-========================= */
-.watch-comments {
-  margin-top: 4px;
-}
-
-.comments-heading {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #ccc;
-  margin: 0 0 14px;
-}
-
-.comment-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.comment-input {
-  width: 100%;
-  background: #141414;
-  border: 1px solid #252525;
-  border-radius: 8px;
-  color: #eee;
-  padding: 10px 12px;
-  font-size: 0.9em;
-  resize: vertical;
-  min-height: 60px;
-  font-family: inherit;
-  transition: border-color 0.2s;
-}
-
-.comment-input:focus {
-  outline: none;
-  border-color: #3a3a3a;
-}
-
-.comment-input::placeholder {
-  color: #444;
-}
-
-.comment-submit-btn {
-  align-self: flex-end;
-  background: #222;
-  border: 1px solid #333;
-  color: #ccc;
-  padding: 8px 20px;
-  border-radius: 7px;
-  cursor: pointer;
-  font-size: 0.88em;
-  font-weight: 600;
-  transition: background 0.2s, color 0.2s;
-}
-
-.comment-submit-btn:hover {
-  background: #2a2a2a;
-  color: #fff;
-}
-
-.comment-login-msg {
-  color: #555;
-  font-size: 0.88em;
-  margin: 0 0 16px;
-}
-
-.comments-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.comment-item {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-
-.comment-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #2a2a2a;
-  background: #1a1a1a;
-  flex-shrink: 0;
-}
-
-.comment-avatar-placeholder {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #444;
-  font-size: 11px;
-  flex-shrink: 0;
-}
-
-.comment-body {
-  flex: 1;
-  background: #121212;
-  border: 1px solid #1e1e1e;
-  border-radius: 8px;
-  padding: 9px 12px;
-}
-
-.comment-author {
-  font-size: 0.8em;
-  font-weight: 700;
-  color: #888;
-  margin: 0 0 4px;
-}
-
-.comment-text {
-  font-size: 0.9em;
-  color: #ddd;
-  margin: 0;
-  word-break: break-word;
-  white-space: pre-wrap;
-}
-
-.comment-delete {
-  background: none;
-  border: none;
-  color: #3a3a3a;
-  cursor: pointer;
-  font-size: 0.75em;
-  padding: 2px 4px;
-  margin-top: 6px;
-  transition: color 0.2s;
-  display: block;
-}
-
-.comment-delete:hover {
-  color: #888;
-}
-
-/* =========================
-   SIDEBAR / RECOMMENDED
-========================= */
-.watch-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.sidebar-heading {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #888;
-  margin: 0 0 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.75rem;
-}
-
-.recommended-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.rec-card {
-  display: flex;
-  gap: 10px;
-  cursor: pointer;
-  border-radius: 8px;
-  padding: 6px;
-  background: #111;
-  border: 1px solid #1a1a1a;
-  transition: background 0.2s, border-color 0.2s;
-  text-decoration: none;
-  color: inherit;
-}
-
-.rec-card:hover {
-  background: #171717;
-  border-color: #252525;
-}
-
-.rec-thumb {
-  width: 120px;
-  min-width: 120px;
-  height: 68px;
-  border-radius: 6px;
-  object-fit: cover;
-  background: #000;
-  flex-shrink: 0;
-}
-
-.rec-thumb-placeholder {
-  width: 120px;
-  min-width: 120px;
-  height: 68px;
-  border-radius: 6px;
-  background: #1a1a1a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.rec-thumb-placeholder svg {
-  opacity: 0.25;
-}
-
-.rec-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  min-width: 0;
-}
-
-.rec-title {
-  font-size: 0.85em;
-  font-weight: 600;
-  color: #ddd;
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.rec-username {
-  font-size: 0.75em;
-  color: #555;
-}
-
-/* =========================
-   LOADING / ERROR STATES
-========================= */
-.watch-loading {
-  text-align: center;
-  color: #444;
-  padding: 60px 20px;
-  font-size: 1rem;
-}
-
-.watch-error {
-  text-align: center;
-  color: #666;
-  padding: 60px 20px;
-}
-
-/* =========================
-   MOBILE
-========================= */
-@media (max-width: 900px) {
-  .watch-layout {
-    grid-template-columns: 1fr;
-    padding: 12px 12px 40px;
-    gap: 0;
+  // Toggle (clicking same removes)
+  if (current === value) {
+    await supabaseClient.from("upload_reactions")
+      .delete()
+      .eq("upload_id", uploadId)
+      .eq("user_id", authUser.id);
+    return;
   }
 
-  .watch-sidebar {
-    margin-top: 28px;
-    border-top: 1px solid #1a1a1a;
-    padding-top: 20px;
+  await supabaseClient.from("upload_reactions")
+    .upsert({ upload_id: uploadId, user_id: authUser.id, value }, { onConflict: "upload_id,user_id" });
+}
+
+// =====================
+// LOAD VIDEO
+// =====================
+async function loadVideo() {
+  if (!videoId) {
+    document.querySelector(".watch-main").innerHTML =
+      `<div class="watch-error"><p>No video specified.</p><a href="/NightClips/">Go home</a></div>`;
+    return;
   }
 
-  .sidebar-heading {
-    margin-bottom: 12px;
+  const { data: file, error } = await supabaseClient
+    .from("uploads").select("*").eq("id", videoId).single();
+
+  if (error || !file) {
+    document.querySelector(".watch-main").innerHTML =
+      `<div class="watch-error"><p>Video not found.</p><a href="/NightClips/">Go home</a></div>`;
+    return;
   }
 
-  .rec-thumb {
-    width: 100px;
-    min-width: 100px;
-    height: 58px;
+  // Set video/image src
+  const mediaUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
+  const isImage  = file.file_type && file.file_type.startsWith("image");
+  const playerWrap = document.querySelector(".watch-player-wrap");
+
+  if (isImage) {
+    // Replace video element with a full image display
+    playerWrap.innerHTML = "";
+    playerWrap.style.aspectRatio = "auto";
+    playerWrap.style.background  = "transparent";
+    const img = document.createElement("img");
+    img.src = mediaUrl;
+    img.style.cssText = "width:100%; border-radius:10px; display:block; max-height:80vh; object-fit:contain; background:#000;";
+    playerWrap.appendChild(img);
+  } else {
+    const vid = document.getElementById("watchVideo");
+    vid.src = mediaUrl;
   }
 
-  .rec-thumb-placeholder {
-    width: 100px;
-    min-width: 100px;
-    height: 58px;
+  // Set page title
+  const title = cleanTitle(file.title);
+  document.title = title + " · NightClips";
+  document.getElementById("watchTitle").textContent = title;
+
+  // Download link
+  const dlBtn = document.getElementById("watchDownload");
+  dlBtn.href = mediaUrl;
+  dlBtn.download = file.file_name || "file";
+
+  // Uploader info
+  const uploader = await getUserRecord(file.user_id);
+
+  const avatarWrap = document.getElementById("watchAvatarWrap");
+  avatarWrap.innerHTML = "";
+  avatarWrap.appendChild(makeAvatar(uploader?.profile_pic_url, 36));
+
+  document.getElementById("watchUsername").textContent = uploader?.username || "Unknown";
+
+  // Make uploader clickable -> channel
+  const uploaderRow = document.getElementById("watchUploader");
+  uploaderRow.style.cursor = "pointer";
+  uploaderRow.onclick = () => {
+    window.location.href = `/NightClips/channel.html?id=${file.user_id}`;
+  };
+
+  // Auth user
+  const authUser = await getAuthUser();
+
+  // Record view
+  await recordView(file.id, authUser);
+
+  // COMMENTS + RECOMMENDED
+  await Promise.all([
+    loadComments(file.id),
+    loadRecommended(file.id),
+  ]);
+
+  // Show comment form or login message
+  if (authUser) {
+    document.getElementById("commentForm").style.display = "flex";
+  } else {
+    document.getElementById("commentLoginMsg").style.display = "block";
+  }
+
+  // Comment submit (do NOT capture authUser forever; fetch fresh inside submit)
+  document.getElementById("commentSubmit").onclick = async () => submitComment(file.id);
+  document.getElementById("commentInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submitComment(file.id);
+  });
+
+  // Like/Dislike (requires you to add the buttons in watch.html)
+  const likeBtn = document.getElementById("likeBtn");
+  const dislikeBtn = document.getElementById("dislikeBtn");
+
+  if (likeBtn && dislikeBtn) {
+    if (!authUser) {
+      likeBtn.disabled = true;
+      dislikeBtn.disabled = true;
+    }
+
+    const refresh = async () => {
+      const freshUser = await getAuthUser();
+      const counts = await getReactionCounts(file.id);
+      document.getElementById("likeCount").textContent = counts.likes;
+      document.getElementById("dislikeCount").textContent = counts.dislikes;
+
+      const mine = await getMyReaction(file.id, freshUser);
+      likeBtn.classList.toggle("active", mine === 1);
+      dislikeBtn.classList.toggle("active", mine === -1);
+    };
+
+    likeBtn.onclick = async () => {
+      const freshUser = await getAuthUser();
+      if (!freshUser) return;
+      await setReaction(file.id, freshUser, 1);
+      await refresh();
+    };
+
+    dislikeBtn.onclick = async () => {
+      const freshUser = await getAuthUser();
+      if (!freshUser) return;
+      await setReaction(file.id, freshUser, -1);
+      await refresh();
+    };
+
+    await refresh();
   }
 }
 
-@media (max-width: 480px) {
-  .watch-nav {
-    padding: 10px 14px;
+// =====================
+// LOAD COMMENTS
+// =====================
+async function loadComments(uploadId) {
+  const authUser = await getAuthUser();
+
+  const { data: comments, error } = await supabaseClient
+    .from("comments")
+    .select("*")
+    .eq("upload_id", uploadId)
+    .order("created_at", { ascending: true });
+
+  const list = document.getElementById("commentsList");
+  list.innerHTML = "";
+
+  if (error) { console.error(error); return; }
+  if (!comments || comments.length === 0) {
+    const empty = document.createElement("p");
+    empty.style.color = "#444";
+    empty.style.fontSize = "0.88em";
+    empty.textContent = "No comments yet. Be the first!";
+    list.appendChild(empty);
+    return;
   }
 
-  .nav-logo {
-    font-size: 1.05rem;
-  }
+  // Batch fetch user records for all commenters
+  const uniqueIds = [...new Set(comments.map(c => c.user_id))];
+  const { data: users } = await supabaseClient
+    .from("users").select("id, username, profile_pic_url").in("id", uniqueIds);
+  const userMap = {};
+  (users || []).forEach(u => { userMap[u.id] = u; });
 
-  .watch-title {
-    font-size: 1rem;
-  }
+  comments.forEach((comment) => {
+    const user = userMap[comment.user_id] || {};
+    const item = document.createElement("div");
+    item.className = "comment-item";
 
-  .watch-layout {
-    padding: 10px 10px 40px;
+    // Avatar (small)
+    const av = document.createElement(user.profile_pic_url ? "img" : "div");
+    if (user.profile_pic_url) {
+      av.src = user.profile_pic_url;
+      av.className = "comment-avatar";
+    } else {
+      av.className = "comment-avatar-placeholder";
+      av.textContent = "?";
+    }
+    item.appendChild(av);
+
+    const body = document.createElement("div");
+    body.className = "comment-body";
+
+    const author = document.createElement("p");
+    author.className = "comment-author";
+    author.textContent = user.username || "Unknown";
+    body.appendChild(author);
+
+    const text = document.createElement("p");
+    text.className = "comment-text";
+    text.textContent = comment.content;
+    body.appendChild(text);
+
+    // Delete button (own comments only)
+    if (authUser && authUser.id === comment.user_id) {
+      const del = document.createElement("button");
+      del.className = "comment-delete";
+      del.textContent = "Delete";
+      del.onclick = async () => {
+        await supabaseClient.from("comments").delete().eq("id", comment.id);
+        await loadComments(uploadId);
+      };
+      body.appendChild(del);
+    }
+
+    item.appendChild(body);
+    list.appendChild(item);
+  });
+}
+
+// =====================
+// SUBMIT COMMENT
+// =====================
+async function submitComment(uploadId) {
+  const authUser = await getAuthUser();
+  if (!authUser) return;
+
+  const input = document.getElementById("commentInput");
+  const content = input.value.trim();
+  if (!content) return;
+
+  const submitBtn = document.getElementById("commentSubmit");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Posting...";
+
+  const { error } = await supabaseClient.from("comments").insert({
+    upload_id: uploadId,
+    user_id:   authUser.id,
+    content,
+  });
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = "Post";
+
+  if (!error) {
+    input.value = "";
+    await loadComments(uploadId);
+    document.getElementById("commentsList").scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 }
+
+// =====================
+// LOAD RECOMMENDED
+// =====================
+async function loadRecommended(currentId) {
+  const { data: uploads, error } = await supabaseClient
+    .from("uploads")
+    .select("*")
+    .neq("id", currentId)
+    .order("created_at", { ascending: false })
+    .limit(15);
+
+  const list = document.getElementById("recommendedList");
+  list.innerHTML = "";
+
+  if (error || !uploads || uploads.length === 0) {
+    const empty = document.createElement("p");
+    empty.style.color = "#444";
+    empty.style.fontSize = "0.85em";
+    empty.textContent = "No other videos yet.";
+    list.appendChild(empty);
+    return;
+  }
+
+  // Batch fetch uploaders
+  const uniqueIds = [...new Set(uploads.map(u => u.user_id))];
+  const { data: users } = await supabaseClient
+    .from("users").select("id, username, profile_pic_url").in("id", uniqueIds);
+  const userMap = {};
+  (users || []).forEach(u => { userMap[u.id] = u; });
+
+  uploads.forEach((file) => {
+    const card = document.createElement("a");
+    card.className = "rec-card";
+    card.href = `/NightClips/watch.html?id=${file.id}`;
+
+    // Thumbnail
+    if (file.thumbnail_path) {
+      const thumbUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.thumbnail_path).data.publicUrl;
+      const img = document.createElement("img");
+      img.src = thumbUrl;
+      img.className = "rec-thumb";
+      img.alt = "";
+      card.appendChild(img);
+    } else {
+      const placeholder = document.createElement("div");
+      placeholder.className = "rec-thumb-placeholder";
+      placeholder.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+      card.appendChild(placeholder);
+    }
+
+    // Info
+    const info = document.createElement("div");
+    info.className = "rec-info";
+
+    const title = document.createElement("p");
+    title.className = "rec-title";
+    title.textContent = cleanTitle(file.title);
+    info.appendChild(title);
+
+    const user = userMap[file.user_id];
+    if (user?.username) {
+      const uname = document.createElement("p");
+      uname.className = "rec-username";
+      uname.textContent = user.username;
+      info.appendChild(uname);
+    }
+
+    card.appendChild(info);
+    list.appendChild(card);
+  });
+}
+
+// =====================
+// INIT
+// =====================
+loadVideo();
