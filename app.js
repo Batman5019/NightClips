@@ -639,18 +639,29 @@ function renderGalleryPage() {
     card.className = "card";
     card.dataset.title = (file.title || "").replace(/\s*\[.+\]\s*$/, "").trim().toLowerCase();
 
+    // Clickable media area — goes to watch page
+    const mediaWrap = document.createElement("div");
+    mediaWrap.style.cursor = "pointer";
+    mediaWrap.onclick = () => { window.location.href = `/NightClips/watch.html?id=${file.id}`; };
+
     if (file.thumbnail_path) {
       const thumbUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.thumbnail_path).data.publicUrl;
       const img = document.createElement("img");
       img.src = thumbUrl;
       img.style.width = "100%";
       img.style.borderRadius = "6px";
-      card.appendChild(img);
+      mediaWrap.appendChild(img);
     } else if (file.file_type && file.file_type.startsWith("video")) {
-      card.appendChild(createVideoCardContent(url));
+      const videoContent = createVideoCardContent(url);
+      mediaWrap.appendChild(videoContent);
     }
+    card.appendChild(mediaWrap);
 
-    card.appendChild(buildCardTitleRowSync(file, galleryUserMap));
+    // Title row also links to watch page
+    const titleRow = buildCardTitleRowSync(file, galleryUserMap);
+    titleRow.style.cursor = "pointer";
+    titleRow.onclick = () => { window.location.href = `/NightClips/watch.html?id=${file.id}`; };
+    card.appendChild(titleRow);
 
     const dl = document.createElement("a");
     dl.href = url;
