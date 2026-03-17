@@ -69,21 +69,33 @@
   <div id="upload" class="tab-content" style="display:none;">
     <div class="upload-card">
       <div class="input-group">
-        <label for="videoTitleInput">Video Title</label>
-        <input type="text" id="videoTitleInput" placeholder="Enter your video title">
+        <label for="videoTitleInput">Title</label>
+        <input type="text" id="videoTitleInput" placeholder="Enter a title">
       </div>
 
-      <input type="file" id="videoInput" accept="video/*" hidden>
+      <!-- Type toggle -->
+      <div class="upload-type-toggle">
+        <button id="typeVideoBtn" class="type-btn active" data-type="video">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="15" height="12" rx="2"/><path d="M17 10l5-3v10l-5-3"/></svg>
+          Video
+        </button>
+        <button id="typeImageBtn" class="type-btn" data-type="image">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Image
+        </button>
+      </div>
+
+      <input type="file" id="videoInput" accept="video/*,image/*" hidden>
       <div class="file-pick-row">
         <button id="chooseFileBtn" class="file-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l-4 4L7 10"/><path d="M12 14V3"/><rect x="3" y="17" width="18" height="4" rx="1"/></svg>
-          Choose Video
+          <span id="chooseFileBtnLabel">Choose Video</span>
         </button>
-        <span id="fileName" class="file-name-label">No video selected</span>
+        <span id="fileName" class="file-name-label">No file selected</span>
       </div>
 
       <input type="file" id="thumbnailInput" accept="image/*" hidden>
-      <div class="file-pick-row">
+      <div class="file-pick-row" id="thumbnailRow">
         <button id="chooseThumbnailBtn" class="file-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           Choose Thumbnail
