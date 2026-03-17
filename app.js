@@ -696,37 +696,40 @@ function renderPagination(totalPages, totalCount) {
 
   if (totalPages <= 1) return;
 
+  // Controls row
+  const controls = document.createElement("div");
+  controls.className = "pagination-controls";
+
   // Prev button
   const prev = document.createElement("button");
   prev.textContent = "←";
-  prev.className = "page-btn" + (galleryPage === 1 ? " disabled" : "");
+  prev.className = "page-btn nav-btn" + (galleryPage === 1 ? " disabled" : "");
   prev.disabled = galleryPage === 1;
   prev.onclick = () => { galleryPage--; renderGalleryPage(); window.scrollTo(0, 0); };
-  pager.appendChild(prev);
+  controls.appendChild(prev);
 
-  // Page number buttons — show up to 5 around current page
+  // Page number buttons — show up to 2 around current page
   const range = 2;
   for (let i = 1; i <= totalPages; i++) {
     if (i === 1 || i === totalPages || (i >= galleryPage - range && i <= galleryPage + range)) {
-      // Gap indicator
       if (i === galleryPage - range && i > 2) {
         const gap = document.createElement("span");
         gap.className = "page-gap";
         gap.textContent = "…";
-        pager.appendChild(gap);
+        controls.appendChild(gap);
       }
 
       const btn = document.createElement("button");
       btn.textContent = i;
       btn.className = "page-btn" + (i === galleryPage ? " active" : "");
       btn.onclick = ((page) => () => { galleryPage = page; renderGalleryPage(); window.scrollTo(0, 0); })(i);
-      pager.appendChild(btn);
+      controls.appendChild(btn);
 
       if (i === galleryPage + range && i < totalPages - 1) {
         const gap = document.createElement("span");
         gap.className = "page-gap";
         gap.textContent = "…";
-        pager.appendChild(gap);
+        controls.appendChild(gap);
       }
     }
   }
@@ -734,15 +737,17 @@ function renderPagination(totalPages, totalCount) {
   // Next button
   const next = document.createElement("button");
   next.textContent = "→";
-  next.className = "page-btn" + (galleryPage === totalPages ? " disabled" : "");
+  next.className = "page-btn nav-btn" + (galleryPage === totalPages ? " disabled" : "");
   next.disabled = galleryPage === totalPages;
   next.onclick = () => { galleryPage++; renderGalleryPage(); window.scrollTo(0, 0); };
-  pager.appendChild(next);
+  controls.appendChild(next);
 
-  // Page count label
+  pager.appendChild(controls);
+
+  // Label below controls
   const label = document.createElement("span");
   label.className = "page-label";
-  label.textContent = `Page ${galleryPage} of ${totalPages} · ${totalCount} videos`;
+  label.textContent = `Page ${galleryPage} of ${totalPages}  ·  ${totalCount} video${totalCount !== 1 ? "s" : ""}`;
   pager.appendChild(label);
 }
 
