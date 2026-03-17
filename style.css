@@ -611,6 +611,66 @@ h1 {
 }
 
 /* =========================
+   PAGINATION
+========================= */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.page-btn {
+  background: #1c1c1c;
+  color: #aaa;
+  border: 1px solid #333;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: bold;
+  transition: background 0.2s, color 0.2s;
+  min-width: 38px;
+  text-align: center;
+}
+
+.page-btn:hover:not(.disabled) {
+  background: #2a2a2a;
+  color: #fff;
+  border-color: #555;
+}
+
+.page-btn.active {
+  background: #333;
+  color: #fff;
+  border-color: #555;
+}
+
+.page-btn.disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.page-gap {
+  color: #555;
+  font-size: 0.9em;
+  padding: 0 2px;
+  user-select: none;
+}
+
+.page-label {
+  width: 100%;
+  text-align: center;
+  color: #666;
+  font-size: 0.8em;
+  margin-top: 4px;
+}
+
+/* =========================
    RESPONSIVE / MOBILE
 ========================= */
 
