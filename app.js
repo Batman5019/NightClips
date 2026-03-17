@@ -129,7 +129,23 @@ signupBtn.onclick = async () => {
   const { data, error } = await supabaseClient.auth.signUp({ email, password });
   if (error) { authMessage.textContent = error.message; return; }
 
-  await supabaseClient.from("users").insert({ id: data.user.id, username });
+  const userId = data.user?.id || data.session?.user?.id;
+  if (!userId) {
+    authMessage.textContent = "Signup failed — try logging in if you already have an account.";
+    return;
+  }
+
+  // Insert users row — ignore conflict in case it already exists
+  const { error: insertError } = await supabaseClient
+    .from("users")
+    .upsert({ id: userId, username }, { onConflict: "id" });
+
+  if (insertError) {
+    console.error("users insert error:", insertError);
+    authMessage.textContent = "Account created but profile setup failed: " + insertError.message;
+    return;
+  }
+
   init();
 };
 
@@ -267,7 +283,17 @@ async function loadProfile() {
   const { data: auth } = await supabaseClient.auth.getUser();
   if (!auth.user) return;
 
-  const userRecord = await getUserRecord(auth.user.id);
+  let userRecord = await getUserRecord(auth.user.id);
+
+  // Auto-repair: if no users row exists, create one now
+  if (!userRecord) {
+    const username = auth.user.email?.split("@")[0] || "user";
+    await supabaseClient
+      .from("users")
+      .upsert({ id: auth.user.id, username }, { onConflict: "id" });
+    userRecord = await getUserRecord(auth.user.id);
+  }
+
   if (!userRecord) return;
 
   editUsernameInput.value = userRecord.username || "";
@@ -300,15 +326,14 @@ saveProfileBtn.onclick = async () => {
   const newUsername = editUsernameInput.value.trim();
   const picFile = profilePicInput.files[0];
 
-  if (!newUsername && !picFile) {
-    profileMessage.textContent = "Nothing to update";
+  if (!newUsername) {
+    profileMessage.textContent = "Username cannot be empty";
     saveProfileBtn.textContent = "Save Profile";
     saveProfileBtn.disabled = false;
     return;
   }
 
-  const updateData = {};
-  if (newUsername) updateData.username = newUsername;
+  const updateData = { username: newUsername };
 
   if (picFile) {
     const sanitizedName = picFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
@@ -320,7 +345,7 @@ saveProfileBtn.onclick = async () => {
 
     if (picError) {
       console.error("Profile pic upload error:", picError);
-      profileMessage.textContent = "Profile pic upload failed";
+      profileMessage.textContent = "Profile pic upload failed: " + picError.message;
       saveProfileBtn.textContent = "Save Profile";
       saveProfileBtn.disabled = false;
       return;
@@ -336,7 +361,7 @@ saveProfileBtn.onclick = async () => {
 
   if (updateError) {
     console.error("Profile update error:", updateError);
-    profileMessage.textContent = "Failed to update profile";
+    profileMessage.textContent = "Failed: " + updateError.message;
     saveProfileBtn.textContent = "Save Profile";
     saveProfileBtn.disabled = false;
     return;
@@ -361,7 +386,6 @@ saveProfileBtn.onclick = async () => {
   saveProfileBtn.textContent = "Save Profile";
   saveProfileBtn.disabled = false;
 
-  // Reload gallery & library so cards show updated avatar
   await loadGallery();
   await loadLibrary();
 };
