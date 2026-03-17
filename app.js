@@ -259,7 +259,19 @@ chooseThumbnailBtn.onclick = () => thumbnailInput.click();
 chooseProfilePicBtn.onclick = () => profilePicInput.click();
 
 videoInput.onchange = () => {
-  videoFileName.textContent = videoInput.files[0]?.name || "No video selected";
+  const file = videoInput.files[0];
+  videoFileName.textContent = file?.name || "No file selected";
+  // Show image preview if image mode
+  if (file && uploadType === "image") {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      thumbPreview.src = e.target.result;
+      thumbPreviewWrap.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  } else if (uploadType === "image") {
+    thumbPreviewWrap.style.display = "none";
+  }
 };
 
 thumbnailInput.onchange = () => {
