@@ -221,8 +221,39 @@ tabBtns.forEach((btn) => {
 });
 
 // =====================
-// FILE INPUTS
+// UPLOAD TYPE TOGGLE
 // =====================
+let uploadType = "video"; // "video" or "image"
+
+const typeVideoBtn = document.getElementById("typeVideoBtn");
+const typeImageBtn = document.getElementById("typeImageBtn");
+const chooseFileBtnLabel = document.getElementById("chooseFileBtnLabel");
+const thumbnailRow = document.getElementById("thumbnailRow");
+
+typeVideoBtn.onclick = () => {
+  uploadType = "video";
+  typeVideoBtn.classList.add("active");
+  typeImageBtn.classList.remove("active");
+  videoInput.accept = "video/*";
+  chooseFileBtnLabel.textContent = "Choose Video";
+  videoFileName.textContent = "No file selected";
+  videoInput.value = "";
+  thumbnailRow.style.display = "flex";
+};
+
+typeImageBtn.onclick = () => {
+  uploadType = "image";
+  typeImageBtn.classList.add("active");
+  typeVideoBtn.classList.remove("active");
+  videoInput.accept = "image/*";
+  chooseFileBtnLabel.textContent = "Choose Image";
+  videoFileName.textContent = "No file selected";
+  videoInput.value = "";
+  thumbnailRow.style.display = "none"; // no separate thumbnail for images
+  thumbPreviewWrap.style.display = "none";
+};
+
+
 chooseVideoBtn.onclick = () => videoInput.click();
 chooseThumbnailBtn.onclick = () => thumbnailInput.click();
 chooseProfilePicBtn.onclick = () => profilePicInput.click();
@@ -394,12 +425,12 @@ saveProfileBtn.onclick = async () => {
 // UPLOAD LOGIC
 // =====================
 uploadBtn.onclick = async () => {
-  const videoFile     = videoInput.files[0];
+  const mediaFile     = videoInput.files[0];
   const thumbnailFile = thumbnailInput.files[0];
   const title         = document.getElementById("videoTitleInput").value.trim();
 
-  if (!videoFile)  { uploadMessage.textContent = "No video selected"; return; }
-  if (!title)      { uploadMessage.textContent = "Enter a video title"; return; }
+  if (!mediaFile)  { uploadMessage.textContent = "No file selected"; return; }
+  if (!title)      { uploadMessage.textContent = "Enter a title"; return; }
 
   uploadMessage.textContent = "Uploading...";
   uploadBar.style.width = "0%";
@@ -407,13 +438,10 @@ uploadBtn.onclick = async () => {
   const { data: auth } = await supabaseClient.auth.getUser();
   if (!auth.user) { uploadMessage.textContent = "Not logged in"; return; }
 
-  const userRecord = await getUserRecord(auth.user.id);
-  const username   = userRecord?.username || "Unknown";
-
-  // New title format — just the title; username stored separately for display
-  const timestamp          = Date.now();
-  const sanitizedVideoName = videoFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
-  const videoPath          = `${auth.user.id}/${timestamp}_${sanitizedVideoName}`;
+  const timestamp       = Date.now();
+  const sanitizedName   = mediaFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
+  const mediaPath       = `${auth.user.id}/${timestamp}_${sanitizedName}`;
+  const isImage         = mediaFile.type.startsWith("image");
 
   let progress = 0;
   const interval = setInterval(() => {
@@ -421,14 +449,18 @@ uploadBtn.onclick = async () => {
   }, 100);
 
   try {
-    const { error: videoError } = await supabaseClient.storage
-      .from("public-files").upload(videoPath, videoFile, { upsert: true });
+    const { error: mediaError } = await supabaseClient.storage
+      .from("public-files").upload(mediaPath, mediaFile, { upsert: true });
     clearInterval(interval);
     uploadBar.style.width = "100%";
-    if (videoError) throw videoError;
+    if (mediaError) throw mediaError;
 
     let thumbnailPath = null;
-    if (thumbnailFile) {
+
+    if (isImage) {
+      // For images, the image itself is the thumbnail
+      thumbnailPath = mediaPath;
+    } else if (thumbnailFile) {
       const sanitizedThumb = thumbnailFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
       thumbnailPath = `${auth.user.id}/thumbnails/${timestamp}_${sanitizedThumb}`;
       const { error: thumbError } = await supabaseClient.storage
@@ -436,19 +468,18 @@ uploadBtn.onclick = async () => {
       if (thumbError) throw thumbError;
     }
 
-    // Store plain title — username is fetched at render time
     await supabaseClient.from("uploads").insert({
       user_id:        auth.user.id,
       title:          title,
-      file_name:      videoFile.name,
-      file_path:      videoPath,
-      file_type:      videoFile.type,
+      file_name:      mediaFile.name,
+      file_path:      mediaPath,
+      file_type:      mediaFile.type,
       thumbnail_path: thumbnailPath,
     });
 
     videoInput.value = null;
     thumbnailInput.value = null;
-    videoFileName.textContent       = "No video selected";
+    videoFileName.textContent       = "No file selected";
     thumbnailFileName.textContent   = "No thumbnail selected";
     thumbPreviewWrap.style.display  = "none";
     document.getElementById("videoTitleInput").value = "";
@@ -462,7 +493,7 @@ uploadBtn.onclick = async () => {
     clearInterval(interval);
     uploadBar.style.width = "0%";
     console.error(err);
-    uploadMessage.textContent = "Sorry that file is too big, compress it or use a new video";
+    uploadMessage.textContent = "Upload failed — file may be too big";
   }
 };
 
@@ -668,11 +699,15 @@ function renderGalleryPage() {
     mediaLink.href = `/NightClips/watch.html?id=${file.id}`;
     mediaLink.className = "card-media-link";
 
+    const isImage = file.file_type && file.file_type.startsWith("image");
+
     if (file.thumbnail_path) {
       const thumbUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.thumbnail_path).data.publicUrl;
       const img = document.createElement("img");
       img.src = thumbUrl;
       img.className = "card-thumb";
+      // Images don't need the 16:9 crop — show full image
+      if (isImage) img.style.aspectRatio = "auto";
       img.alt = "";
       mediaLink.appendChild(img);
     } else {
