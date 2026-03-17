@@ -580,11 +580,19 @@ function buildCardTitleRowSync(file, userMap) {
 }
 
 // =====================
+// GALLERY STATE
+// =====================
+const VIDEOS_PER_PAGE = 10;
+let galleryAllUploads = [];
+let galleryUserMap    = {};
+let galleryAuthUser   = null;
+let galleryPage       = 1;
+let galleryQuery      = "";
+
+// =====================
 // LOAD GALLERY (ALL VIDEOS)
 // =====================
 async function loadGallery() {
-  const allVideos = document.getElementById("allVideos");
-
   const { data: uploads, error } = await supabaseClient
     .from("uploads").select("*").order("created_at", { ascending: false });
   if (error) { console.error(error); return; }
@@ -595,13 +603,37 @@ async function loadGallery() {
     latestUploadTime = newest;
   }
 
-  // Batch-fetch all uploaders in one query
-  const userMap = uploads.length > 0 ? await fetchUsersForUploads(uploads) : {};
-
-  allVideos.innerHTML = "";
+  galleryAllUploads = uploads;
+  galleryUserMap    = uploads.length > 0 ? await fetchUsersForUploads(uploads) : {};
   const { data: authData } = await supabaseClient.auth.getUser();
+  galleryAuthUser = authData.user || null;
 
-  uploads.forEach((file) => {
+  // Reset to page 1 when gallery freshly loads
+  galleryPage = 1;
+  renderGalleryPage();
+}
+
+// =====================
+// RENDER GALLERY PAGE
+// =====================
+function renderGalleryPage() {
+  const allVideos = document.getElementById("allVideos");
+  allVideos.innerHTML = "";
+
+  // Filter by search query
+  const filtered = galleryQuery
+    ? galleryAllUploads.filter((f) =>
+        (f.title || "").replace(/\s*\[.+\]\s*$/, "").trim().toLowerCase().includes(galleryQuery)
+      )
+    : galleryAllUploads;
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / VIDEOS_PER_PAGE));
+  if (galleryPage > totalPages) galleryPage = totalPages;
+
+  const start = (galleryPage - 1) * VIDEOS_PER_PAGE;
+  const pageUploads = filtered.slice(start, start + VIDEOS_PER_PAGE);
+
+  pageUploads.forEach((file) => {
     const url = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
     const card = document.createElement("div");
     card.className = "card";
@@ -618,7 +650,7 @@ async function loadGallery() {
       card.appendChild(createVideoCardContent(url));
     }
 
-    card.appendChild(buildCardTitleRowSync(file, userMap));
+    card.appendChild(buildCardTitleRowSync(file, galleryUserMap));
 
     const dl = document.createElement("a");
     dl.href = url;
@@ -627,7 +659,7 @@ async function loadGallery() {
     dl.style.display = "block";
     card.appendChild(dl);
 
-    if (authData.user && authData.user.id === file.user_id) {
+    if (galleryAuthUser && galleryAuthUser.id === file.user_id) {
       const delBtn = document.createElement("button");
       delBtn.textContent = "Delete";
       delBtn.onclick = async () => {
@@ -646,24 +678,81 @@ async function loadGallery() {
     allVideos.appendChild(card);
   });
 
-  const searchInput = document.getElementById("searchInput");
-  if (searchInput && searchInput.value.trim()) filterGallery(searchInput.value);
+  renderPagination(totalPages, filtered.length);
+}
+
+// =====================
+// RENDER PAGINATION
+// =====================
+function renderPagination(totalPages, totalCount) {
+  let pager = document.getElementById("galleryPagination");
+  if (!pager) {
+    pager = document.createElement("div");
+    pager.id = "galleryPagination";
+    pager.className = "pagination";
+    document.getElementById("gallery").appendChild(pager);
+  }
+  pager.innerHTML = "";
+
+  if (totalPages <= 1) return;
+
+  // Prev button
+  const prev = document.createElement("button");
+  prev.textContent = "←";
+  prev.className = "page-btn" + (galleryPage === 1 ? " disabled" : "");
+  prev.disabled = galleryPage === 1;
+  prev.onclick = () => { galleryPage--; renderGalleryPage(); window.scrollTo(0, 0); };
+  pager.appendChild(prev);
+
+  // Page number buttons — show up to 5 around current page
+  const range = 2;
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= galleryPage - range && i <= galleryPage + range)) {
+      // Gap indicator
+      if (i === galleryPage - range && i > 2) {
+        const gap = document.createElement("span");
+        gap.className = "page-gap";
+        gap.textContent = "…";
+        pager.appendChild(gap);
+      }
+
+      const btn = document.createElement("button");
+      btn.textContent = i;
+      btn.className = "page-btn" + (i === galleryPage ? " active" : "");
+      btn.onclick = ((page) => () => { galleryPage = page; renderGalleryPage(); window.scrollTo(0, 0); })(i);
+      pager.appendChild(btn);
+
+      if (i === galleryPage + range && i < totalPages - 1) {
+        const gap = document.createElement("span");
+        gap.className = "page-gap";
+        gap.textContent = "…";
+        pager.appendChild(gap);
+      }
+    }
+  }
+
+  // Next button
+  const next = document.createElement("button");
+  next.textContent = "→";
+  next.className = "page-btn" + (galleryPage === totalPages ? " disabled" : "");
+  next.disabled = galleryPage === totalPages;
+  next.onclick = () => { galleryPage++; renderGalleryPage(); window.scrollTo(0, 0); };
+  pager.appendChild(next);
+
+  // Page count label
+  const label = document.createElement("span");
+  label.className = "page-label";
+  label.textContent = `Page ${galleryPage} of ${totalPages} · ${totalCount} videos`;
+  pager.appendChild(label);
 }
 
 // =====================
 // SEARCH / FILTER GALLERY
 // =====================
-function filterGallery(query) {
-  const cards = document.querySelectorAll("#allVideos .card");
-  const q = query.toLowerCase().trim();
-  cards.forEach((card) => {
-    const title = card.dataset.title || "";
-    card.style.display = title.includes(q) ? "flex" : "none";
-  });
-}
-
 document.getElementById("searchInput").addEventListener("input", function () {
-  filterGallery(this.value);
+  galleryQuery = this.value.toLowerCase().trim();
+  galleryPage  = 1;
+  renderGalleryPage();
 });
 
 // =====================
