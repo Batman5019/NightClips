@@ -65,10 +65,24 @@ async function loadVideo() {
     return;
   }
 
-  // Set video src
-  const videoUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
-  const vid = document.getElementById("watchVideo");
-  vid.src = videoUrl;
+  // Set video/image src
+  const mediaUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
+  const isImage  = file.file_type && file.file_type.startsWith("image");
+  const playerWrap = document.querySelector(".watch-player-wrap");
+
+  if (isImage) {
+    // Replace video element with a full image display
+    playerWrap.innerHTML = "";
+    playerWrap.style.aspectRatio = "auto";
+    playerWrap.style.background  = "transparent";
+    const img = document.createElement("img");
+    img.src = mediaUrl;
+    img.style.cssText = "width:100%; border-radius:10px; display:block; max-height:80vh; object-fit:contain; background:#000;";
+    playerWrap.appendChild(img);
+  } else {
+    const vid = document.getElementById("watchVideo");
+    vid.src = mediaUrl;
+  }
 
   // Set page title
   const title = cleanTitle(file.title);
@@ -77,8 +91,8 @@ async function loadVideo() {
 
   // Download link
   const dlBtn = document.getElementById("watchDownload");
-  dlBtn.href = videoUrl;
-  dlBtn.download = file.file_name || "video";
+  dlBtn.href = mediaUrl;
+  dlBtn.download = file.file_name || "file";
 
   // Uploader info
   const uploader = await getUserRecord(file.user_id);
