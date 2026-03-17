@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="apple-touch-icon" href="/NightClips/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/NightClips/icon-192.png" />
+  <link rel="manifest" href="/NightClips/manifest.json" />
+  <title>NightClips</title>
+  <link rel="stylesheet" href="watch.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="watch-nav">
+  <a href="/NightClips/" class="nav-logo">
+    <img src="/NightClips/icon-192.png" alt="NightClips" class="nav-logo-img">
+    <span>NightClips</span>
+  </a>
+</nav>
+
+<!-- MAIN LAYOUT -->
+<div class="watch-layout">
+
+  <!-- LEFT: VIDEO + INFO + COMMENTS -->
+  <div class="watch-main">
+
+    <!-- VIDEO PLAYER -->
+    <div class="watch-player-wrap">
+      <video id="watchVideo" class="watch-video" controls playsinline></video>
+    </div>
+
+    <!-- VIDEO INFO -->
+    <div class="watch-info">
+      <h1 id="watchTitle" class="watch-title"></h1>
+      <div class="watch-meta">
+        <div class="watch-uploader" id="watchUploader">
+          <div id="watchAvatarWrap"></div>
+          <span id="watchUsername"></span>
+        </div>
+        <a id="watchDownload" class="watch-download-btn" download>Download</a>
+      </div>
+    </div>
+
+    <!-- COMMENTS -->
+    <div class="watch-comments">
+      <h2 class="comments-heading">Comments</h2>
+
+      <div id="commentForm" class="comment-form" style="display:none;">
+        <textarea id="commentInput" class="comment-input" placeholder="Add a comment..." rows="2"></textarea>
+        <button id="commentSubmit" class="comment-submit-btn">Post</button>
+      </div>
+      <p id="commentLoginMsg" class="comment-login-msg" style="display:none;">Log in to comment.</p>
+
+      <div id="commentsList" class="comments-list"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: RECOMMENDED -->
+  <aside class="watch-sidebar">
+    <h2 class="sidebar-heading">Recommended</h2>
+    <div id="recommendedList" class="recommended-list"></div>
+  </aside>
+
+</div>
+
+<script src="watch.js"></script>
+</body>
+</html>
