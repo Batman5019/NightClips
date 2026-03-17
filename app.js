@@ -221,8 +221,69 @@ tabBtns.forEach((btn) => {
 });
 
 // =====================
-// UPLOAD TYPE TOGGLE
+// LOGOUT
 // =====================
+document.getElementById("logoutBtn").onclick = async () => {
+  await supabaseClient.auth.signOut();
+  window.location.reload();
+};
+
+// =====================
+// DELETE ACCOUNT
+// =====================
+const deleteModal      = document.getElementById("deleteModal");
+const cancelDeleteBtn  = document.getElementById("cancelDeleteBtn");
+const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+
+document.getElementById("deleteAccountBtn").onclick = () => {
+  deleteModal.style.display = "flex";
+};
+
+cancelDeleteBtn.onclick = () => {
+  deleteModal.style.display = "none";
+};
+
+// Close modal if clicking outside
+deleteModal.onclick = (e) => {
+  if (e.target === deleteModal) deleteModal.style.display = "none";
+};
+
+confirmDeleteBtn.onclick = async () => {
+  confirmDeleteBtn.textContent = "Deleting...";
+  confirmDeleteBtn.disabled = true;
+
+  const { data: auth } = await supabaseClient.auth.getUser();
+  if (!auth.user) { window.location.reload(); return; }
+
+  const userId = auth.user.id;
+
+  // 1. Delete all uploads from storage + DB
+  const { data: uploads } = await supabaseClient
+    .from("uploads").select("file_path, thumbnail_path").eq("user_id", userId);
+
+  if (uploads && uploads.length > 0) {
+    const paths = uploads.flatMap(u => [
+      u.file_path,
+      u.thumbnail_path && u.thumbnail_path !== u.file_path ? u.thumbnail_path : null
+    ]).filter(Boolean);
+    if (paths.length > 0) {
+      await supabaseClient.storage.from("public-files").remove(paths);
+    }
+    await supabaseClient.from("uploads").delete().eq("user_id", userId);
+  }
+
+  // 2. Delete comments
+  await supabaseClient.from("comments").delete().eq("user_id", userId);
+
+  // 3. Delete users row
+  await supabaseClient.from("users").delete().eq("id", userId);
+
+  // 4. Sign out (auth user deletion requires admin key — sign out is safest from client)
+  await supabaseClient.auth.signOut();
+  window.location.reload();
+};
+
+
 let uploadType = "video"; // "video" or "image"
 
 const typeVideoBtn = document.getElementById("typeVideoBtn");
