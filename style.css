@@ -241,7 +241,41 @@ h1 {
   border-radius: 6px;
 }
 
-/* Card title row: avatar + text */
+/* Card media link — always clickable, never plays video inline */
+.card-media-link {
+  display: block;
+  width: 100%;
+  text-decoration: none;
+  border-radius: 6px;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-thumb {
+  width: 100%;
+  display: block;
+  border-radius: 6px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #000;
+}
+
+.card-thumb-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #111;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-media-link:hover .card-thumb,
+.card-media-link:hover .card-thumb-placeholder {
+  opacity: 0.85;
+}
+
+
 .card-title-row {
   display: flex;
   align-items: center;
