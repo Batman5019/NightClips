@@ -919,3 +919,154 @@ html, body {
   .header-profile { display: none !important; }
   .tab-btn { padding: 8px 10px; }
 }
+
+/* Auth subtitle */
+.auth-subtitle {
+  color: #333;
+  font-size: 0.88em;
+  margin: -6px 0 4px;
+  font-weight: 400;
+}
+
+/* =========================
+   DANGER ZONE
+========================= */
+.danger-zone {
+  border-top: 1px solid #1a1a1a;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.danger-zone-label {
+  font-size: 0.75em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #2a2a2a;
+  margin: 0 0 2px;
+}
+
+.danger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid;
+  transition: all 0.18s;
+  width: 100%;
+  justify-content: center;
+}
+
+.logout-btn {
+  background: #111;
+  color: #777;
+  border-color: #1e1e1e;
+}
+
+.logout-btn:hover {
+  background: #161616;
+  color: #ccc;
+  border-color: #2a2a2a;
+}
+
+.delete-btn {
+  background: #130a0a;
+  color: #663333;
+  border-color: #1e1010;
+}
+
+.delete-btn:hover {
+  background: #1a0c0c;
+  color: #cc4444;
+  border-color: #2a1414;
+}
+
+/* =========================
+   MODAL
+========================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-box {
+  background: #0e0e0e;
+  border: 1px solid #1e1e1e;
+  border-radius: 16px;
+  padding: 28px 24px;
+  max-width: 380px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #eee;
+  margin: 0;
+}
+
+.modal-body {
+  font-size: 0.88em;
+  color: #555;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.modal-cancel-btn {
+  flex: 1;
+  padding: 11px;
+  background: #141414;
+  border: 1px solid #222;
+  border-radius: 9px;
+  color: #888;
+  font-size: 0.88em;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.modal-cancel-btn:hover { background: #1a1a1a; color: #ccc; }
+
+.modal-confirm-btn {
+  flex: 1;
+  padding: 11px;
+  background: #1a0a0a;
+  border: 1px solid #2a1010;
+  border-radius: 9px;
+  color: #cc3333;
+  font-size: 0.88em;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.modal-confirm-btn:hover {
+  background: #220d0d;
+  color: #ee4444;
+  border-color: #3a1515;
+}
