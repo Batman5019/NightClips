@@ -72,6 +72,10 @@ const uploadBar             = document.getElementById("uploadBar");
 const userIdText            = document.getElementById("userId");
 const uploadMessage         = document.getElementById("uploadMessage");
 const editUsernameInput     = document.getElementById("editUsernameInput");
+
+// NEW: profile description textarea
+const editDescriptionInput  = document.getElementById("editDescriptionInput");
+
 const profilePicInput       = document.getElementById("profilePicInput");
 const chooseProfilePicBtn   = document.getElementById("chooseProfilePicBtn");
 const saveProfileBtn        = document.getElementById("saveProfileBtn");
@@ -283,7 +287,6 @@ confirmDeleteBtn.onclick = async () => {
   window.location.reload();
 };
 
-
 let uploadType = "video"; // "video" or "image"
 
 const typeVideoBtn = document.getElementById("typeVideoBtn");
@@ -313,7 +316,6 @@ typeImageBtn.onclick = () => {
   thumbnailRow.style.display = "none"; // no separate thumbnail for images
   thumbPreviewWrap.style.display = "none";
 };
-
 
 chooseVideoBtn.onclick = () => videoInput.click();
 chooseThumbnailBtn.onclick = () => thumbnailInput.click();
@@ -401,6 +403,7 @@ async function loadProfile() {
   if (!userRecord) return;
 
   editUsernameInput.value = userRecord.username || "";
+  if (editDescriptionInput) editDescriptionInput.value = userRecord.description || "";
 
   if (userRecord.profile_pic_url) {
     profilePicPreview.src = userRecord.profile_pic_url;
@@ -422,22 +425,23 @@ saveProfileBtn.onclick = async () => {
   const { data: auth } = await supabaseClient.auth.getUser();
   if (!auth.user) {
     profileMessage.textContent = "Not logged in";
-    saveProfileBtn.textContent = "Save Profile";
+    saveProfileBtn.textContent = "Save changes";
     saveProfileBtn.disabled = false;
     return;
   }
 
   const newUsername = editUsernameInput.value.trim();
+  const newDescription = (editDescriptionInput ? editDescriptionInput.value : "").trim();
   const picFile = profilePicInput.files[0];
 
   if (!newUsername) {
     profileMessage.textContent = "Username cannot be empty";
-    saveProfileBtn.textContent = "Save Profile";
+    saveProfileBtn.textContent = "Save changes";
     saveProfileBtn.disabled = false;
     return;
   }
 
-  const updateData = { username: newUsername };
+  const updateData = { username: newUsername, description: newDescription };
 
   if (picFile) {
     const sanitizedName = picFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
@@ -450,7 +454,7 @@ saveProfileBtn.onclick = async () => {
     if (picError) {
       console.error("Profile pic upload error:", picError);
       profileMessage.textContent = "Profile pic upload failed: " + picError.message;
-      saveProfileBtn.textContent = "Save Profile";
+      saveProfileBtn.textContent = "Save changes";
       saveProfileBtn.disabled = false;
       return;
     }
@@ -466,7 +470,7 @@ saveProfileBtn.onclick = async () => {
   if (updateError) {
     console.error("Profile update error:", updateError);
     profileMessage.textContent = "Failed: " + updateError.message;
-    saveProfileBtn.textContent = "Save Profile";
+    saveProfileBtn.textContent = "Save changes";
     saveProfileBtn.disabled = false;
     return;
   }
@@ -487,7 +491,7 @@ saveProfileBtn.onclick = async () => {
   updateHeaderProfile(finalRecord?.username, finalRecord?.profile_pic_url);
 
   profileMessage.textContent = "Profile updated!";
-  saveProfileBtn.textContent = "Save Profile";
+  saveProfileBtn.textContent = "Save changes";
   saveProfileBtn.disabled = false;
 
   await loadGallery();
@@ -571,28 +575,6 @@ uploadBtn.onclick = async () => {
 };
 
 // =====================
-// MIGRATE OLD TITLES
-// Strip old "[username]" suffix from existing uploads for the current user
-// so they display cleanly in the new [avatar] Title [username] card format
-// =====================
-async function migrateOldTitles() {
-  const { data: auth } = await supabaseClient.auth.getUser();
-  if (!auth.user) return;
-
-  const { data: uploads, error } = await supabaseClient
-    .from("uploads").select("id, title").eq("user_id", auth.user.id);
-  if (error || !uploads) return;
-
-  for (const upload of uploads) {
-    // Match " [anything]" at the end of the title
-    const cleaned = upload.title.replace(/\s*\[.+\]\s*$/, "").trim();
-    if (cleaned !== upload.title) {
-      await supabaseClient.from("uploads").update({ title: cleaned }).eq("id", upload.id);
-    }
-  }
-}
-
-// =====================
 // VIDEO CARD CONTENT
 // =====================
 function createVideoCardContent(url) {
@@ -605,48 +587,6 @@ function createVideoCardContent(url) {
   vid.playsInline = true;
   container.appendChild(vid);
   return container;
-}
-
-// Build the title row: [avatar] Title \n username
-async function buildCardTitleRow(file) {
-  const row = document.createElement("div");
-  row.className = "card-title-row";
-
-  // Avatar
-  const picUrl = await getProfilePicUrl(file.user_id);
-  if (picUrl) {
-    const av = document.createElement("img");
-    av.src = picUrl;
-    av.className = "card-uploader-avatar";
-    av.alt = "";
-    row.appendChild(av);
-  } else {
-    const av = document.createElement("div");
-    av.className = "card-uploader-avatar-placeholder";
-    av.textContent = "?";
-    row.appendChild(av);
-  }
-
-  // Title + username
-  const textWrap = document.createElement("div");
-  textWrap.className = "card-title-text";
-
-  const titleEl = document.createElement("p");
-  titleEl.className = "vid-title";
-  titleEl.textContent = file.title;
-  textWrap.appendChild(titleEl);
-
-  // Fetch username for this uploader
-  const username = await getUsernameById(file.user_id);
-  if (username) {
-    const uploaderEl = document.createElement("p");
-    uploaderEl.className = "vid-uploader";
-    uploaderEl.textContent = username;
-    textWrap.appendChild(uploaderEl);
-  }
-
-  row.appendChild(textWrap);
-  return row;
 }
 
 // =====================
@@ -674,18 +614,28 @@ function buildCardTitleRowSync(file, userMap) {
   const picUrl = user?.profile_pic_url || null;
   const username = user?.username || null;
 
+  let avatarNode;
   if (picUrl) {
     const av = document.createElement("img");
     av.src = picUrl;
     av.className = "card-uploader-avatar";
     av.alt = "";
-    row.appendChild(av);
+    avatarNode = av;
   } else {
     const av = document.createElement("div");
     av.className = "card-uploader-avatar-placeholder";
     av.textContent = "?";
-    row.appendChild(av);
+    avatarNode = av;
   }
+
+  // NEW: avatar goes to channel page
+  avatarNode.style.cursor = "pointer";
+  avatarNode.onclick = (e) => {
+    e.stopPropagation();
+    window.location.href = `/NightClips/channel.html?id=${file.user_id}`;
+  };
+
+  row.appendChild(avatarNode);
 
   const textWrap = document.createElement("div");
   textWrap.className = "card-title-text";
@@ -700,6 +650,14 @@ function buildCardTitleRowSync(file, userMap) {
     const uploaderEl = document.createElement("p");
     uploaderEl.className = "vid-uploader";
     uploaderEl.textContent = username;
+
+    // NEW: username goes to channel page
+    uploaderEl.style.cursor = "pointer";
+    uploaderEl.onclick = (e) => {
+      e.stopPropagation();
+      window.location.href = `/NightClips/channel.html?id=${file.user_id}`;
+    };
+
     textWrap.appendChild(uploaderEl);
   }
 
@@ -793,7 +751,7 @@ function renderGalleryPage() {
 
     card.appendChild(mediaLink);
 
-    // Title row also links to watch page
+    // Title row also links to watch page (but username/avatar inside go to channel)
     const titleRow = buildCardTitleRowSync(file, galleryUserMap);
     titleRow.style.cursor = "pointer";
     titleRow.onclick = () => { window.location.href = `/NightClips/watch.html?id=${file.id}`; };
@@ -811,10 +769,15 @@ function renderGalleryPage() {
       delBtn.textContent = "Delete";
       delBtn.onclick = async () => {
         await supabaseClient.from("uploads").delete().eq("id", file.id);
+
+        // remove file
         await supabaseClient.storage.from("public-files").remove([file.file_path]);
-        if (file.thumbnail_path) {
+
+        // FIX: don't remove same path twice for images
+        if (file.thumbnail_path && file.thumbnail_path !== file.file_path) {
           await supabaseClient.storage.from("public-files").remove([file.thumbnail_path]);
         }
+
         await loadGallery();
         await loadLibrary();
         await updateBadges();
@@ -952,10 +915,14 @@ async function loadLibrary() {
     delBtn.textContent = "Delete";
     delBtn.onclick = async () => {
       await supabaseClient.from("uploads").delete().eq("id", file.id);
+
       await supabaseClient.storage.from("public-files").remove([file.file_path]);
-      if (file.thumbnail_path) {
+
+      // FIX: don't remove same path twice for images
+      if (file.thumbnail_path && file.thumbnail_path !== file.file_path) {
         await supabaseClient.storage.from("public-files").remove([file.thumbnail_path]);
       }
+
       await loadGallery();
       await loadLibrary();
       await updateBadges();
