@@ -663,23 +663,27 @@ function renderGalleryPage() {
     card.className = "card";
     card.dataset.title = (file.title || "").replace(/\s*\[.+\]\s*$/, "").trim().toLowerCase();
 
-    // Clickable media area — goes to watch page
-    const mediaWrap = document.createElement("div");
-    mediaWrap.style.cursor = "pointer";
-    mediaWrap.onclick = () => { window.location.href = `/NightClips/watch.html?id=${file.id}`; };
+    // Clickable media area — always navigates to watch page, never plays inline
+    const mediaLink = document.createElement("a");
+    mediaLink.href = `/NightClips/watch.html?id=${file.id}`;
+    mediaLink.className = "card-media-link";
 
     if (file.thumbnail_path) {
       const thumbUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.thumbnail_path).data.publicUrl;
       const img = document.createElement("img");
       img.src = thumbUrl;
-      img.style.width = "100%";
-      img.style.borderRadius = "6px";
-      mediaWrap.appendChild(img);
-    } else if (file.file_type && file.file_type.startsWith("video")) {
-      const videoContent = createVideoCardContent(url);
-      mediaWrap.appendChild(videoContent);
+      img.className = "card-thumb";
+      img.alt = "";
+      mediaLink.appendChild(img);
+    } else {
+      // No thumbnail — dark placeholder with play icon
+      const placeholder = document.createElement("div");
+      placeholder.className = "card-thumb-placeholder";
+      placeholder.innerHTML = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="rgba(255,255,255,0.5)" stroke="none"/></svg>`;
+      mediaLink.appendChild(placeholder);
     }
-    card.appendChild(mediaWrap);
+
+    card.appendChild(mediaLink);
 
     // Title row also links to watch page
     const titleRow = buildCardTitleRowSync(file, galleryUserMap);
