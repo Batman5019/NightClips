@@ -8,8 +8,8 @@ const supabaseClient = createClient(
 // =====================
 // HELPERS
 // =====================
-const params   = new URLSearchParams(window.location.search);
-const videoId  = params.get("id");
+const params  = new URLSearchParams(window.location.search);
+const videoId = params.get("id");
 
 function cleanTitle(t) {
   return (t || "").replace(/\s*\[.+\]\s*$/, "").trim();
@@ -21,26 +21,23 @@ async function getUserRecord(userId) {
   return data || null;
 }
 
-function makeAvatar(picUrl, size = 36) {
+function makeAvatar(picUrl, size = 34) {
   if (picUrl) {
     const img = document.createElement("img");
     img.src = picUrl;
     img.className = "watch-avatar";
-    img.style.width = size + "px";
+    img.style.width  = size + "px";
     img.style.height = size + "px";
     return img;
   }
   const div = document.createElement("div");
   div.className = "watch-avatar-placeholder";
-  div.style.width = size + "px";
+  div.style.width  = size + "px";
   div.style.height = size + "px";
   div.textContent = "?";
   return div;
 }
 
-// =====================
-// REDIRECT IF NOT LOGGED IN
-// =====================
 async function getAuthUser() {
   const { data } = await supabaseClient.auth.getUser();
   return data?.user || null;
@@ -65,60 +62,172 @@ async function loadVideo() {
     return;
   }
 
-  // Set video/image src
-  const mediaUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
-  const isImage  = file.file_type && file.file_type.startsWith("image");
+  // Media
+  const mediaUrl   = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
+  const isImage    = file.file_type && file.file_type.startsWith("image");
   const playerWrap = document.querySelector(".watch-player-wrap");
 
   if (isImage) {
-    // Replace video element with a full image display
     playerWrap.innerHTML = "";
     playerWrap.style.aspectRatio = "auto";
     playerWrap.style.background  = "transparent";
     const img = document.createElement("img");
     img.src = mediaUrl;
-    img.style.cssText = "width:100%; border-radius:10px; display:block; max-height:80vh; object-fit:contain; background:#000;";
+    img.style.cssText = "width:100%; border-radius:12px; display:block; max-height:80vh; object-fit:contain; background:#000;";
     playerWrap.appendChild(img);
   } else {
     const vid = document.getElementById("watchVideo");
     vid.src = mediaUrl;
   }
 
-  // Set page title
+  // Title
   const title = cleanTitle(file.title);
   document.title = title + " · NightClips";
   document.getElementById("watchTitle").textContent = title;
 
-  // Download link
+  // Download
   const dlBtn = document.getElementById("watchDownload");
-  dlBtn.href = mediaUrl;
+  dlBtn.href     = mediaUrl;
   dlBtn.download = file.file_name || "file";
 
-  // Uploader info
-  const uploader = await getUserRecord(file.user_id);
+  // Uploader — clicking goes to channel page
+  const uploader   = await getUserRecord(file.user_id);
   const avatarWrap = document.getElementById("watchAvatarWrap");
-  avatarWrap.appendChild(makeAvatar(uploader?.profile_pic_url, 36));
+  avatarWrap.appendChild(makeAvatar(uploader?.profile_pic_url, 34));
   document.getElementById("watchUsername").textContent = uploader?.username || "Unknown";
 
-  // Load comments + recommended in parallel
+  const watchUploaderEl = document.getElementById("watchUploader");
+  watchUploaderEl.style.cursor = "pointer";
+  watchUploaderEl.onclick = () => {
+    window.location.href = `/NightClips/channel.html?id=${file.user_id}`;
+  };
+
+  // Auth user needed for likes + comments
   const authUser = await getAuthUser();
+
+  // Load everything in parallel
   await Promise.all([
+    loadReactions(file.id, authUser),
     loadComments(file.id, authUser),
     loadRecommended(file.id),
   ]);
 
-  // Show comment form or login message
+  // Comment form visibility
   if (authUser) {
     document.getElementById("commentForm").style.display = "flex";
   } else {
     document.getElementById("commentLoginMsg").style.display = "block";
   }
 
-  // Comment submit
   document.getElementById("commentSubmit").onclick = () => submitComment(file.id, authUser);
   document.getElementById("commentInput").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submitComment(file.id, authUser);
   });
+}
+
+// =====================
+// REACTIONS (LIKE / DISLIKE)
+// =====================
+async function loadReactions(uploadId, authUser) {
+  const likeBtn    = document.getElementById("likeBtn");
+  const dislikeBtn = document.getElementById("dislikeBtn");
+  const likeCount    = document.getElementById("likeCount");
+  const dislikeCount = document.getElementById("dislikeCount");
+
+  // Fetch all reactions for this upload
+  const { data: reactions } = await supabaseClient
+    .from("upload_reactions")
+    .select("user_id, value")
+    .eq("upload_id", uploadId);
+
+  const likes    = (reactions || []).filter(r => r.value ===  1).length;
+  const dislikes = (reactions || []).filter(r => r.value === -1).length;
+
+  likeCount.textContent    = likes;
+  dislikeCount.textContent = dislikes;
+
+  if (!authUser) {
+    // Not logged in — show counts but disable buttons
+    likeBtn.disabled    = true;
+    dislikeBtn.disabled = true;
+    likeBtn.title    = "Log in to react";
+    dislikeBtn.title = "Log in to react";
+    return;
+  }
+
+  // Check current user's existing reaction
+  const mine = (reactions || []).find(r => r.user_id === authUser.id);
+  updateReactionUI(mine?.value ?? null);
+
+  // Wire buttons
+  likeBtn.onclick    = () => handleReaction(uploadId, authUser.id,  1);
+  dislikeBtn.onclick = () => handleReaction(uploadId, authUser.id, -1);
+}
+
+// Toggle a reaction: click same = remove, click opposite = switch
+async function handleReaction(uploadId, userId, value) {
+  const likeBtn    = document.getElementById("likeBtn");
+  const dislikeBtn = document.getElementById("dislikeBtn");
+
+  // Optimistic: disable while saving
+  likeBtn.disabled    = true;
+  dislikeBtn.disabled = true;
+
+  // Fetch current reaction
+  const { data: existing } = await supabaseClient
+    .from("upload_reactions")
+    .select("id, value")
+    .eq("upload_id", uploadId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existing) {
+    if (existing.value === value) {
+      // Same button clicked → remove reaction
+      await supabaseClient
+        .from("upload_reactions")
+        .delete()
+        .eq("id", existing.id);
+    } else {
+      // Different button → switch reaction
+      await supabaseClient
+        .from("upload_reactions")
+        .update({ value })
+        .eq("id", existing.id);
+    }
+  } else {
+    // No existing reaction → insert
+    await supabaseClient
+      .from("upload_reactions")
+      .insert({ upload_id: uploadId, user_id: userId, value });
+  }
+
+  // Re-fetch counts + own reaction and refresh UI
+  const { data: reactions } = await supabaseClient
+    .from("upload_reactions")
+    .select("user_id, value")
+    .eq("upload_id", uploadId);
+
+  const likes    = (reactions || []).filter(r => r.value ===  1).length;
+  const dislikes = (reactions || []).filter(r => r.value === -1).length;
+
+  document.getElementById("likeCount").textContent    = likes;
+  document.getElementById("dislikeCount").textContent = dislikes;
+
+  const mine = (reactions || []).find(r => r.user_id === userId);
+  updateReactionUI(mine?.value ?? null);
+
+  likeBtn.disabled    = false;
+  dislikeBtn.disabled = false;
+}
+
+// Update button active states
+function updateReactionUI(myValue) {
+  const likeBtn    = document.getElementById("likeBtn");
+  const dislikeBtn = document.getElementById("dislikeBtn");
+
+  likeBtn.classList.toggle("active",    myValue ===  1);
+  dislikeBtn.classList.toggle("active", myValue === -1);
 }
 
 // =====================
@@ -135,16 +244,16 @@ async function loadComments(uploadId, authUser) {
   list.innerHTML = "";
 
   if (error) { console.error(error); return; }
+
   if (!comments || comments.length === 0) {
     const empty = document.createElement("p");
-    empty.style.color = "#444";
-    empty.style.fontSize = "0.88em";
+    empty.style.cssText = "color:#333; font-size:0.88em; margin:0;";
     empty.textContent = "No comments yet. Be the first!";
     list.appendChild(empty);
     return;
   }
 
-  // Batch fetch user records for all commenters
+  // Batch fetch user records
   const uniqueIds = [...new Set(comments.map(c => c.user_id))];
   const { data: users } = await supabaseClient
     .from("users").select("id, username, profile_pic_url").in("id", uniqueIds);
@@ -156,7 +265,7 @@ async function loadComments(uploadId, authUser) {
     const item = document.createElement("div");
     item.className = "comment-item";
 
-    // Avatar (small)
+    // Avatar
     const av = document.createElement(user.profile_pic_url ? "img" : "div");
     if (user.profile_pic_url) {
       av.src = user.profile_pic_url;
@@ -180,7 +289,6 @@ async function loadComments(uploadId, authUser) {
     text.textContent = comment.content;
     body.appendChild(text);
 
-    // Delete button (own comments only)
     if (authUser && authUser.id === comment.user_id) {
       const del = document.createElement("button");
       del.className = "comment-delete";
@@ -202,12 +310,12 @@ async function loadComments(uploadId, authUser) {
 // =====================
 async function submitComment(uploadId, authUser) {
   if (!authUser) return;
-  const input = document.getElementById("commentInput");
+  const input   = document.getElementById("commentInput");
   const content = input.value.trim();
   if (!content) return;
 
   const submitBtn = document.getElementById("commentSubmit");
-  submitBtn.disabled = true;
+  submitBtn.disabled    = true;
   submitBtn.textContent = "Posting...";
 
   const { error } = await supabaseClient.from("comments").insert({
@@ -216,13 +324,12 @@ async function submitComment(uploadId, authUser) {
     content,
   });
 
-  submitBtn.disabled = false;
+  submitBtn.disabled    = false;
   submitBtn.textContent = "Post";
 
   if (!error) {
     input.value = "";
     await loadComments(uploadId, authUser);
-    // Scroll comments into view
     document.getElementById("commentsList").scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 }
@@ -243,8 +350,7 @@ async function loadRecommended(currentId) {
 
   if (error || !uploads || uploads.length === 0) {
     const empty = document.createElement("p");
-    empty.style.color = "#444";
-    empty.style.fontSize = "0.85em";
+    empty.style.cssText = "color:#333; font-size:0.85em; margin:0;";
     empty.textContent = "No other videos yet.";
     list.appendChild(empty);
     return;
@@ -262,7 +368,6 @@ async function loadRecommended(currentId) {
     card.className = "rec-card";
     card.href = `/NightClips/watch.html?id=${file.id}`;
 
-    // Thumbnail
     if (file.thumbnail_path) {
       const thumbUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.thumbnail_path).data.publicUrl;
       const img = document.createElement("img");
@@ -273,11 +378,10 @@ async function loadRecommended(currentId) {
     } else {
       const placeholder = document.createElement("div");
       placeholder.className = "rec-thumb-placeholder";
-      placeholder.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+      placeholder.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
       card.appendChild(placeholder);
     }
 
-    // Info
     const info = document.createElement("div");
     info.className = "rec-info";
 
