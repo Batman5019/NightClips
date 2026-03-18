@@ -56,6 +56,7 @@ const authPage       = document.getElementById("authPage");
 const dashboardPage  = document.getElementById("dashboardPage");
 const usernameInput  = document.getElementById("usernameInput");
 const passwordInput  = document.getElementById("passwordInput");
+const emailInput     = document.getElementById("emailInput");
 const authMessage    = document.getElementById("authMessage");
 const signupBtn      = document.getElementById("signupBtn");
 const loginBtn       = document.getElementById("loginBtn");
@@ -72,10 +73,7 @@ const uploadBar             = document.getElementById("uploadBar");
 const userIdText            = document.getElementById("userId");
 const uploadMessage         = document.getElementById("uploadMessage");
 const editUsernameInput     = document.getElementById("editUsernameInput");
-
-// NEW: profile description textarea
 const editDescriptionInput  = document.getElementById("editDescriptionInput");
-
 const profilePicInput       = document.getElementById("profilePicInput");
 const chooseProfilePicBtn   = document.getElementById("chooseProfilePicBtn");
 const saveProfileBtn        = document.getElementById("saveProfileBtn");
@@ -106,7 +104,6 @@ async function getUsernameById(userId) {
   return record?.username || null;
 }
 
-// Get profile pic URL for any user id (cached in memory)
 const profilePicCache = {};
 async function getProfilePicUrl(userId) {
   if (profilePicCache[userId] !== undefined) return profilePicCache[userId];
@@ -115,22 +112,67 @@ async function getProfilePicUrl(userId) {
   return profilePicCache[userId];
 }
 
-// Invalidate cache for a user (called after profile save)
 function invalidateProfileCache(userId) {
   delete profilePicCache[userId];
 }
 
+// Show/hide auth steps
+function showAuthStep(stepId) {
+  ["authStep1", "forgotStep1", "forgotStep2", "forgotStep3"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === stepId ? "flex" : "none";
+  });
+}
+
 // =====================
-// AUTH
+// AUTH — SIGNUP shows email field
 // =====================
+
+// Toggle email field visibility: visible during signup flow
+let isSignupMode = false;
+
+signupBtn.addEventListener("mouseenter", () => {
+  if (!isSignupMode) {
+    isSignupMode = true;
+    emailInput.style.display = "block";
+    signupBtn.textContent = "Create account ↑ (add email above)";
+  }
+});
+
+// Actually just show it on first click if empty — cleaner UX
 signupBtn.onclick = async () => {
   authMessage.textContent = "";
+  authMessage.className = "";
+
+  // Show the email field if it's hidden and empty
+  if (emailInput.style.display === "none" && !emailInput.value.trim()) {
+    emailInput.style.display = "block";
+    emailInput.focus();
+    authMessage.textContent = "Enter your email for account recovery, then click Create account again.";
+    authMessage.className = "auth-msg-success";
+    return;
+  }
+
   const username = usernameInput.value.trim();
   const password = passwordInput.value;
-  if (!username || !password) { authMessage.textContent = "Fill all fields"; return; }
+  const email    = emailInput.value.trim();
 
-  const email = `${username}@fake.local`;
+  if (!username || !password) { authMessage.textContent = "Fill in username and password"; return; }
+  if (!email) { authMessage.textContent = "Enter your email for account recovery"; return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    authMessage.textContent = "Enter a valid email address";
+    return;
+  }
+
+  signupBtn.textContent = "Creating...";
+  signupBtn.disabled = true;
+
+  // Use the real email for the auth account
   const { data, error } = await supabaseClient.auth.signUp({ email, password });
+
+  signupBtn.textContent = "Create account";
+  signupBtn.disabled = false;
+
   if (error) { authMessage.textContent = error.message; return; }
 
   const userId = data.user?.id || data.session?.user?.id;
@@ -139,10 +181,9 @@ signupBtn.onclick = async () => {
     return;
   }
 
-  // Insert users row — ignore conflict in case it already exists
   const { error: insertError } = await supabaseClient
     .from("users")
-    .upsert({ id: userId, username }, { onConflict: "id" });
+    .upsert({ id: userId, username, email }, { onConflict: "id" });
 
   if (insertError) {
     console.error("users insert error:", insertError);
@@ -155,14 +196,231 @@ signupBtn.onclick = async () => {
 
 loginBtn.onclick = async () => {
   authMessage.textContent = "";
+  authMessage.className = "";
   const username = usernameInput.value.trim();
   const password = passwordInput.value;
   if (!username || !password) { authMessage.textContent = "Fill all fields"; return; }
 
-  const email = `${username}@fake.local`;
-  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) { authMessage.textContent = error.message; } else { init(); }
+  loginBtn.textContent = "Logging in...";
+  loginBtn.disabled = true;
+
+  // Try signing in with stored real email
+  // Look up the user's email from the users table first
+  const { data: userRow } = await supabaseClient
+    .from("users").select("email").eq("username", username).maybeSingle();
+
+  let loginEmail;
+  if (userRow?.email) {
+    loginEmail = userRow.email;
+  } else {
+    // Legacy fallback: fake email pattern
+    loginEmail = `${username}@fake.local`;
+  }
+
+  const { error } = await supabaseClient.auth.signInWithPassword({ email: loginEmail, password });
+
+  loginBtn.textContent = "Log in";
+  loginBtn.disabled = false;
+
+  if (error) {
+    authMessage.textContent = error.message;
+  } else {
+    init();
+  }
 };
+
+// =====================
+// FORGOT PASSWORD FLOW
+// =====================
+
+// Track the email discovered during step 1 so we can use it in step 3
+let forgotEmail = "";
+
+// Step 1: show forgot form
+document.getElementById("showForgotBtn").onclick = () => {
+  authMessage.textContent = "";
+  showAuthStep("forgotStep1");
+};
+
+// Step 1 → Back
+document.getElementById("forgotBackBtn").onclick = () => {
+  document.getElementById("forgotMessage1").textContent = "";
+  document.getElementById("forgotUsernameInput").value = "";
+  showAuthStep("authStep1");
+};
+
+// Step 1 → Send OTP code
+document.getElementById("forgotSendBtn").onclick = () => sendForgotCode();
+
+document.getElementById("forgotUsernameInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendForgotCode();
+});
+
+async function sendForgotCode() {
+  const msg      = document.getElementById("forgotMessage1");
+  const sendBtn  = document.getElementById("forgotSendBtn");
+  const username = document.getElementById("forgotUsernameInput").value.trim();
+
+  msg.textContent = "";
+  msg.className = "";
+
+  if (!username) { msg.textContent = "Enter your username"; return; }
+
+  sendBtn.textContent = "Sending...";
+  sendBtn.disabled = true;
+
+  // Look up the real email for this username
+  const { data: userRow, error: lookupError } = await supabaseClient
+    .from("users").select("email").eq("username", username).maybeSingle();
+
+  sendBtn.textContent = "Send code";
+  sendBtn.disabled = false;
+
+  if (lookupError || !userRow) {
+    msg.textContent = "No account found with that username.";
+    return;
+  }
+
+  if (!userRow.email) {
+    msg.textContent = "This account has no recovery email saved. Contact support.";
+    return;
+  }
+
+  forgotEmail = userRow.email;
+
+  // Send OTP to the real email
+  const { error: otpError } = await supabaseClient.auth.signInWithOtp({
+    email: forgotEmail,
+    options: { shouldCreateUser: false },
+  });
+
+  if (otpError) {
+    msg.textContent = "Failed to send code: " + otpError.message;
+    return;
+  }
+
+  msg.textContent = `Code sent to ${maskEmail(forgotEmail)}`;
+  msg.className = "auth-msg-success";
+
+  setTimeout(() => {
+    document.getElementById("forgotMessage1").textContent = "";
+    document.getElementById("forgotOtpInput").value = "";
+    showAuthStep("forgotStep2");
+  }, 1200);
+}
+
+// Mask email for display: j***@gmail.com
+function maskEmail(email) {
+  const [local, domain] = email.split("@");
+  const visible = local.slice(0, 1);
+  return `${visible}***@${domain}`;
+}
+
+// Step 2: Verify OTP code
+document.getElementById("forgotVerifyBtn").onclick = () => verifyOtp();
+
+document.getElementById("forgotOtpInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") verifyOtp();
+});
+
+// Resend code
+document.getElementById("forgotResendBtn").onclick = async () => {
+  const msg = document.getElementById("forgotMessage2");
+  msg.className = "";
+
+  if (!forgotEmail) { showAuthStep("forgotStep1"); return; }
+
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email: forgotEmail,
+    options: { shouldCreateUser: false },
+  });
+
+  if (error) {
+    msg.textContent = "Could not resend: " + error.message;
+  } else {
+    msg.textContent = `Code resent to ${maskEmail(forgotEmail)}`;
+    msg.className = "auth-msg-success";
+  }
+};
+
+async function verifyOtp() {
+  const msg       = document.getElementById("forgotMessage2");
+  const verifyBtn = document.getElementById("forgotVerifyBtn");
+  const token     = document.getElementById("forgotOtpInput").value.trim();
+
+  msg.textContent = "";
+  msg.className = "";
+
+  if (!token || token.length < 6) { msg.textContent = "Enter the 6-digit code"; return; }
+  if (!forgotEmail) { showAuthStep("forgotStep1"); return; }
+
+  verifyBtn.textContent = "Verifying...";
+  verifyBtn.disabled = true;
+
+  const { error } = await supabaseClient.auth.verifyOtp({
+    email: forgotEmail,
+    token,
+    type: "email",
+  });
+
+  verifyBtn.textContent = "Verify code";
+  verifyBtn.disabled = false;
+
+  if (error) {
+    msg.textContent = "Invalid or expired code. Try again.";
+    return;
+  }
+
+  // Verified — move to new password step
+  document.getElementById("newPasswordInput").value    = "";
+  document.getElementById("confirmPasswordInput").value = "";
+  document.getElementById("forgotMessage3").textContent = "";
+  showAuthStep("forgotStep3");
+}
+
+// Step 3: Save new password
+document.getElementById("forgotSaveBtn").onclick = () => saveNewPassword();
+
+document.getElementById("confirmPasswordInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") saveNewPassword();
+});
+
+async function saveNewPassword() {
+  const msg     = document.getElementById("forgotMessage3");
+  const saveBtn = document.getElementById("forgotSaveBtn");
+  const newPass = document.getElementById("newPasswordInput").value;
+  const confirm = document.getElementById("confirmPasswordInput").value;
+
+  msg.textContent = "";
+  msg.className = "";
+
+  if (!newPass) { msg.textContent = "Enter a new password"; return; }
+  if (newPass.length < 6) { msg.textContent = "Password must be at least 6 characters"; return; }
+  if (newPass !== confirm) { msg.textContent = "Passwords don't match"; return; }
+
+  saveBtn.textContent = "Saving...";
+  saveBtn.disabled = true;
+
+  const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+
+  saveBtn.textContent = "Save new password";
+  saveBtn.disabled = false;
+
+  if (error) {
+    msg.textContent = "Failed to update password: " + error.message;
+    return;
+  }
+
+  msg.textContent = "Password updated! Logging you in...";
+  msg.className = "auth-msg-success";
+
+  // Already signed in via OTP — go straight to dashboard
+  setTimeout(() => {
+    forgotEmail = "";
+    showAuthStep("authStep1");
+    init();
+  }, 1500);
+}
 
 // =====================
 // BADGES TAB RENDER
@@ -198,6 +456,7 @@ async function init() {
   if (!data.user) {
     authPage.style.display = "flex";
     dashboardPage.style.display = "none";
+    showAuthStep("authStep1");
     return;
   }
   authPage.style.display = "none";
@@ -247,7 +506,6 @@ cancelDeleteBtn.onclick = () => {
   deleteModal.style.display = "none";
 };
 
-// Close modal if clicking outside
 deleteModal.onclick = (e) => {
   if (e.target === deleteModal) deleteModal.style.display = "none";
 };
@@ -261,7 +519,6 @@ confirmDeleteBtn.onclick = async () => {
 
   const userId = auth.user.id;
 
-  // 1. Delete all uploads from storage + DB
   const { data: uploads } = await supabaseClient
     .from("uploads").select("file_path, thumbnail_path").eq("user_id", userId);
 
@@ -276,23 +533,21 @@ confirmDeleteBtn.onclick = async () => {
     await supabaseClient.from("uploads").delete().eq("user_id", userId);
   }
 
-  // 2. Delete comments
   await supabaseClient.from("comments").delete().eq("user_id", userId);
-
-  // 3. Delete users row
   await supabaseClient.from("users").delete().eq("id", userId);
-
-  // 4. Sign out (auth user deletion requires admin key — sign out is safest from client)
   await supabaseClient.auth.signOut();
   window.location.reload();
 };
 
-let uploadType = "video"; // "video" or "image"
+// =====================
+// UPLOAD TYPE TOGGLE
+// =====================
+let uploadType = "video";
 
-const typeVideoBtn = document.getElementById("typeVideoBtn");
-const typeImageBtn = document.getElementById("typeImageBtn");
+const typeVideoBtn       = document.getElementById("typeVideoBtn");
+const typeImageBtn       = document.getElementById("typeImageBtn");
 const chooseFileBtnLabel = document.getElementById("chooseFileBtnLabel");
-const thumbnailRow = document.getElementById("thumbnailRow");
+const thumbnailRow       = document.getElementById("thumbnailRow");
 
 typeVideoBtn.onclick = () => {
   uploadType = "video";
@@ -313,18 +568,17 @@ typeImageBtn.onclick = () => {
   chooseFileBtnLabel.textContent = "Choose Image";
   videoFileName.textContent = "No file selected";
   videoInput.value = "";
-  thumbnailRow.style.display = "none"; // no separate thumbnail for images
+  thumbnailRow.style.display = "none";
   thumbPreviewWrap.style.display = "none";
 };
 
-chooseVideoBtn.onclick = () => videoInput.click();
+chooseVideoBtn.onclick    = () => videoInput.click();
 chooseThumbnailBtn.onclick = () => thumbnailInput.click();
 chooseProfilePicBtn.onclick = () => profilePicInput.click();
 
 videoInput.onchange = () => {
   const file = videoInput.files[0];
   videoFileName.textContent = file?.name || "No file selected";
-  // Show image preview if image mode
   if (file && uploadType === "image") {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -391,7 +645,6 @@ async function loadProfile() {
 
   let userRecord = await getUserRecord(auth.user.id);
 
-  // Auto-repair: if no users row exists, create one now
   if (!userRecord) {
     const username = auth.user.email?.split("@")[0] || "user";
     await supabaseClient
@@ -430,9 +683,9 @@ saveProfileBtn.onclick = async () => {
     return;
   }
 
-  const newUsername = editUsernameInput.value.trim();
+  const newUsername    = editUsernameInput.value.trim();
   const newDescription = (editDescriptionInput ? editDescriptionInput.value : "").trim();
-  const picFile = profilePicInput.files[0];
+  const picFile        = profilePicInput.files[0];
 
   if (!newUsername) {
     profileMessage.textContent = "Username cannot be empty";
@@ -452,7 +705,6 @@ saveProfileBtn.onclick = async () => {
       .upload(path, picFile, { upsert: true });
 
     if (picError) {
-      console.error("Profile pic upload error:", picError);
       profileMessage.textContent = "Profile pic upload failed: " + picError.message;
       saveProfileBtn.textContent = "Save changes";
       saveProfileBtn.disabled = false;
@@ -468,14 +720,12 @@ saveProfileBtn.onclick = async () => {
     .from("users").update(updateData).eq("id", auth.user.id);
 
   if (updateError) {
-    console.error("Profile update error:", updateError);
     profileMessage.textContent = "Failed: " + updateError.message;
     saveProfileBtn.textContent = "Save changes";
     saveProfileBtn.disabled = false;
     return;
   }
 
-  // Update UI immediately
   if (updateData.profile_pic_url) {
     profilePicPreview.src = updateData.profile_pic_url;
     profilePicPreview.style.display = "block";
@@ -506,8 +756,8 @@ uploadBtn.onclick = async () => {
   const thumbnailFile = thumbnailInput.files[0];
   const title         = document.getElementById("videoTitleInput").value.trim();
 
-  if (!mediaFile)  { uploadMessage.textContent = "No file selected"; return; }
-  if (!title)      { uploadMessage.textContent = "Enter a title"; return; }
+  if (!mediaFile) { uploadMessage.textContent = "No file selected"; return; }
+  if (!title)     { uploadMessage.textContent = "Enter a title"; return; }
 
   uploadMessage.textContent = "Uploading...";
   uploadBar.style.width = "0%";
@@ -515,10 +765,10 @@ uploadBtn.onclick = async () => {
   const { data: auth } = await supabaseClient.auth.getUser();
   if (!auth.user) { uploadMessage.textContent = "Not logged in"; return; }
 
-  const timestamp       = Date.now();
-  const sanitizedName   = mediaFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
-  const mediaPath       = `${auth.user.id}/${timestamp}_${sanitizedName}`;
-  const isImage         = mediaFile.type.startsWith("image");
+  const timestamp     = Date.now();
+  const sanitizedName = mediaFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
+  const mediaPath     = `${auth.user.id}/${timestamp}_${sanitizedName}`;
+  const isImage       = mediaFile.type.startsWith("image");
 
   let progress = 0;
   const interval = setInterval(() => {
@@ -535,7 +785,6 @@ uploadBtn.onclick = async () => {
     let thumbnailPath = null;
 
     if (isImage) {
-      // For images, the image itself is the thumbnail
       thumbnailPath = mediaPath;
     } else if (thumbnailFile) {
       const sanitizedThumb = thumbnailFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
@@ -547,7 +796,7 @@ uploadBtn.onclick = async () => {
 
     await supabaseClient.from("uploads").insert({
       user_id:        auth.user.id,
-      title:          title,
+      title,
       file_name:      mediaFile.name,
       file_path:      mediaPath,
       file_type:      mediaFile.type,
@@ -556,9 +805,9 @@ uploadBtn.onclick = async () => {
 
     videoInput.value = null;
     thumbnailInput.value = null;
-    videoFileName.textContent       = "No file selected";
-    thumbnailFileName.textContent   = "No thumbnail selected";
-    thumbPreviewWrap.style.display  = "none";
+    videoFileName.textContent      = "No file selected";
+    thumbnailFileName.textContent  = "No thumbnail selected";
+    thumbPreviewWrap.style.display = "none";
     document.getElementById("videoTitleInput").value = "";
     uploadBar.style.width = "0%";
     uploadMessage.textContent = "Upload complete!";
@@ -590,7 +839,7 @@ function createVideoCardContent(url) {
 }
 
 // =====================
-// BATCH FETCH ALL USER RECORDS NEEDED FOR A LIST OF UPLOADS
+// BATCH FETCH USERS
 // =====================
 async function fetchUsersForUploads(uploads) {
   const uniqueIds = [...new Set(uploads.map((u) => u.user_id))];
@@ -605,12 +854,11 @@ async function fetchUsersForUploads(uploads) {
   return map;
 }
 
-// Build title row synchronously using pre-fetched user map
 function buildCardTitleRowSync(file, userMap) {
   const row = document.createElement("div");
   row.className = "card-title-row";
 
-  const user = userMap[file.user_id];
+  const user   = userMap[file.user_id];
   const picUrl = user?.profile_pic_url || null;
   const username = user?.username || null;
 
@@ -628,7 +876,6 @@ function buildCardTitleRowSync(file, userMap) {
     avatarNode = av;
   }
 
-  // NEW: avatar goes to channel page
   avatarNode.style.cursor = "pointer";
   avatarNode.onclick = (e) => {
     e.stopPropagation();
@@ -642,7 +889,6 @@ function buildCardTitleRowSync(file, userMap) {
 
   const titleEl = document.createElement("p");
   titleEl.className = "vid-title";
-  // Strip legacy [username] suffix if still present
   titleEl.textContent = (file.title || "").replace(/\s*\[.+\]\s*$/, "").trim();
   textWrap.appendChild(titleEl);
 
@@ -650,14 +896,11 @@ function buildCardTitleRowSync(file, userMap) {
     const uploaderEl = document.createElement("p");
     uploaderEl.className = "vid-uploader";
     uploaderEl.textContent = username;
-
-    // NEW: username goes to channel page
     uploaderEl.style.cursor = "pointer";
     uploaderEl.onclick = (e) => {
       e.stopPropagation();
       window.location.href = `/NightClips/channel.html?id=${file.user_id}`;
     };
-
     textWrap.appendChild(uploaderEl);
   }
 
@@ -675,9 +918,6 @@ let galleryAuthUser   = null;
 let galleryPage       = 1;
 let galleryQuery      = "";
 
-// =====================
-// LOAD GALLERY (ALL VIDEOS)
-// =====================
 async function loadGallery() {
   const { data: uploads, error } = await supabaseClient
     .from("uploads").select("*").order("created_at", { ascending: false });
@@ -694,19 +934,14 @@ async function loadGallery() {
   const { data: authData } = await supabaseClient.auth.getUser();
   galleryAuthUser = authData.user || null;
 
-  // Reset to page 1 when gallery freshly loads
   galleryPage = 1;
   renderGalleryPage();
 }
 
-// =====================
-// RENDER GALLERY PAGE
-// =====================
 function renderGalleryPage() {
   const allVideos = document.getElementById("allVideos");
   allVideos.innerHTML = "";
 
-  // Filter by search query
   const filtered = galleryQuery
     ? galleryAllUploads.filter((f) =>
         (f.title || "").replace(/\s*\[.+\]\s*$/, "").trim().toLowerCase().includes(galleryQuery)
@@ -716,16 +951,15 @@ function renderGalleryPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / VIDEOS_PER_PAGE));
   if (galleryPage > totalPages) galleryPage = totalPages;
 
-  const start = (galleryPage - 1) * VIDEOS_PER_PAGE;
-  const pageUploads = filtered.slice(start, start + VIDEOS_PER_PAGE);
+  const start        = (galleryPage - 1) * VIDEOS_PER_PAGE;
+  const pageUploads  = filtered.slice(start, start + VIDEOS_PER_PAGE);
 
   pageUploads.forEach((file) => {
-    const url = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
+    const url  = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
     const card = document.createElement("div");
     card.className = "card";
     card.dataset.title = (file.title || "").replace(/\s*\[.+\]\s*$/, "").trim().toLowerCase();
 
-    // Clickable media area — always navigates to watch page, never plays inline
     const mediaLink = document.createElement("a");
     mediaLink.href = `/NightClips/watch.html?id=${file.id}`;
     mediaLink.className = "card-media-link";
@@ -737,12 +971,10 @@ function renderGalleryPage() {
       const img = document.createElement("img");
       img.src = thumbUrl;
       img.className = "card-thumb";
-      // Images don't need the 16:9 crop — show full image
       if (isImage) img.style.aspectRatio = "auto";
       img.alt = "";
       mediaLink.appendChild(img);
     } else {
-      // No thumbnail — dark placeholder with play icon
       const placeholder = document.createElement("div");
       placeholder.className = "card-thumb-placeholder";
       placeholder.innerHTML = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="rgba(255,255,255,0.5)" stroke="none"/></svg>`;
@@ -751,7 +983,6 @@ function renderGalleryPage() {
 
     card.appendChild(mediaLink);
 
-    // Title row also links to watch page (but username/avatar inside go to channel)
     const titleRow = buildCardTitleRowSync(file, galleryUserMap);
     titleRow.style.cursor = "pointer";
     titleRow.onclick = () => { window.location.href = `/NightClips/watch.html?id=${file.id}`; };
@@ -769,15 +1000,10 @@ function renderGalleryPage() {
       delBtn.textContent = "Delete";
       delBtn.onclick = async () => {
         await supabaseClient.from("uploads").delete().eq("id", file.id);
-
-        // remove file
         await supabaseClient.storage.from("public-files").remove([file.file_path]);
-
-        // FIX: don't remove same path twice for images
         if (file.thumbnail_path && file.thumbnail_path !== file.file_path) {
           await supabaseClient.storage.from("public-files").remove([file.thumbnail_path]);
         }
-
         await loadGallery();
         await loadLibrary();
         await updateBadges();
@@ -791,9 +1017,6 @@ function renderGalleryPage() {
   renderPagination(totalPages, filtered.length);
 }
 
-// =====================
-// RENDER PAGINATION
-// =====================
 function renderPagination(totalPages, totalCount) {
   let pager = document.getElementById("galleryPagination");
   if (!pager) {
@@ -806,11 +1029,9 @@ function renderPagination(totalPages, totalCount) {
 
   if (totalPages <= 1) return;
 
-  // Controls row
   const controls = document.createElement("div");
   controls.className = "pagination-controls";
 
-  // Prev button
   const prev = document.createElement("button");
   prev.textContent = "←";
   prev.className = "page-btn nav-btn" + (galleryPage === 1 ? " disabled" : "");
@@ -818,7 +1039,6 @@ function renderPagination(totalPages, totalCount) {
   prev.onclick = () => { galleryPage--; renderGalleryPage(); window.scrollTo(0, 0); };
   controls.appendChild(prev);
 
-  // Page number buttons — show up to 2 around current page
   const range = 2;
   for (let i = 1; i <= totalPages; i++) {
     if (i === 1 || i === totalPages || (i >= galleryPage - range && i <= galleryPage + range)) {
@@ -844,7 +1064,6 @@ function renderPagination(totalPages, totalCount) {
     }
   }
 
-  // Next button
   const next = document.createElement("button");
   next.textContent = "→";
   next.className = "page-btn nav-btn" + (galleryPage === totalPages ? " disabled" : "");
@@ -854,16 +1073,12 @@ function renderPagination(totalPages, totalCount) {
 
   pager.appendChild(controls);
 
-  // Label below controls
   const label = document.createElement("span");
   label.className = "page-label";
   label.textContent = `Page ${galleryPage} of ${totalPages}  ·  ${totalCount} video${totalCount !== 1 ? "s" : ""}`;
   pager.appendChild(label);
 }
 
-// =====================
-// SEARCH / FILTER GALLERY
-// =====================
 document.getElementById("searchInput").addEventListener("input", function () {
   galleryQuery = this.value.toLowerCase().trim();
   galleryPage  = 1;
@@ -871,7 +1086,7 @@ document.getElementById("searchInput").addEventListener("input", function () {
 });
 
 // =====================
-// LOAD LIBRARY (USER VIDEOS)
+// LIBRARY
 // =====================
 async function loadLibrary() {
   const userVideos = document.getElementById("userVideos");
@@ -887,7 +1102,7 @@ async function loadLibrary() {
   const userMap = uploads.length > 0 ? await fetchUsersForUploads(uploads) : {};
 
   uploads.forEach((file) => {
-    const url = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
+    const url  = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
     const card = document.createElement("div");
     card.className = "card";
 
@@ -915,14 +1130,10 @@ async function loadLibrary() {
     delBtn.textContent = "Delete";
     delBtn.onclick = async () => {
       await supabaseClient.from("uploads").delete().eq("id", file.id);
-
       await supabaseClient.storage.from("public-files").remove([file.file_path]);
-
-      // FIX: don't remove same path twice for images
       if (file.thumbnail_path && file.thumbnail_path !== file.file_path) {
         await supabaseClient.storage.from("public-files").remove([file.thumbnail_path]);
       }
-
       await loadGallery();
       await loadLibrary();
       await updateBadges();
