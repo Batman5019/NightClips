@@ -97,6 +97,62 @@ html, body {
   margin: 0;
 }
 
+/* Subdued link-style button (Forgot password / Back) */
+.auth-link-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #444 !important;
+  font-size: 0.85em !important;
+  font-weight: 500 !important;
+  padding: 6px 0 !important;
+  cursor: pointer;
+  transition: color 0.2s !important;
+}
+
+.auth-link-btn:hover {
+  background: transparent !important;
+  color: #888 !important;
+  border-color: transparent !important;
+}
+
+/* Step label above OTP / new password inputs */
+.auth-step-label {
+  color: #666 !important;
+  font-size: 0.84em !important;
+  font-weight: 500 !important;
+  text-align: center;
+  max-width: 300px;
+  line-height: 1.5;
+  margin: 0 0 2px !important;
+}
+
+/* Step wrapper — each step is a flex column just like the outer container */
+#authStep1,
+#forgotStep1,
+#forgotStep2,
+#forgotStep3 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 300px;
+}
+
+/* OTP input — bigger, centered, monospace feel */
+#forgotOtpInput {
+  text-align: center;
+  letter-spacing: 0.25em;
+  font-size: 1.4em !important;
+  font-weight: 700 !important;
+  padding: 14px !important;
+}
+
+/* Success message colour override */
+.auth-msg-success {
+  color: #4a9a4a !important;
+}
+
 /* =========================
    CONTAINER
 ========================= */
@@ -299,7 +355,6 @@ html, body {
   border-radius: 8px;
 }
 
-/* Card media link */
 .card-media-link {
   display: block;
   width: 100%;
@@ -334,7 +389,6 @@ html, body {
 .card-media-link:hover .card-thumb { opacity: 0.8; }
 .card-media-link:hover .card-thumb-placeholder { background: #121212; }
 
-/* Card title row */
 .card-title-row {
   display: flex;
   align-items: flex-start;
@@ -389,7 +443,6 @@ html, body {
   font-weight: 500;
 }
 
-/* Card buttons */
 .card a, .card button {
   background: #141414;
   color: #999;
@@ -478,7 +531,6 @@ html, body {
   font-style: italic;
 }
 
-/* Input group */
 .input-group {
   display: flex;
   flex-direction: column;
@@ -512,7 +564,6 @@ html, body {
   border-color: #2e2e2e;
 }
 
-/* Upload type toggle */
 .upload-type-toggle {
   display: flex;
   gap: 6px;
@@ -540,7 +591,6 @@ html, body {
 }
 
 .type-btn svg { opacity: 0.5; transition: opacity 0.18s; }
-
 .type-btn:hover { color: #888; }
 .type-btn:hover svg { opacity: 0.7; }
 
@@ -552,7 +602,6 @@ html, body {
 
 .type-btn.active svg { opacity: 1; }
 
-/* File pick rows */
 .file-pick-row {
   display: flex;
   align-items: center;
@@ -597,7 +646,6 @@ html, body {
   font-style: italic;
 }
 
-/* Upload submit button */
 .upload-submit-btn {
   display: inline-flex;
   align-items: center;
@@ -621,7 +669,6 @@ html, body {
   color: #fff;
 }
 
-/* Upload bar */
 #uploadBarContainer {
   width: 100%;
   background: #111;
@@ -645,7 +692,6 @@ html, body {
   min-height: 18px;
 }
 
-/* Thumbnail preview */
 #thumbPreviewWrap {
   border-radius: 9px;
   overflow: hidden;
@@ -920,7 +966,6 @@ html, body {
   .tab-btn { padding: 8px 10px; }
 }
 
-/* Auth subtitle */
 .auth-subtitle {
   color: #333;
   font-size: 0.88em;
