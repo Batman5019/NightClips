@@ -56,7 +56,6 @@ const authPage       = document.getElementById("authPage");
 const dashboardPage  = document.getElementById("dashboardPage");
 const usernameInput  = document.getElementById("usernameInput");
 const passwordInput  = document.getElementById("passwordInput");
-const emailInput     = document.getElementById("emailInput");
 const authMessage    = document.getElementById("authMessage");
 const signupBtn      = document.getElementById("signupBtn");
 const loginBtn       = document.getElementById("loginBtn");
@@ -99,11 +98,6 @@ async function getUserRecord(userId) {
   return data;
 }
 
-async function getUsernameById(userId) {
-  const record = await getUserRecord(userId);
-  return record?.username || null;
-}
-
 const profilePicCache = {};
 async function getProfilePicUrl(userId) {
   if (profilePicCache[userId] !== undefined) return profilePicCache[userId];
@@ -116,39 +110,19 @@ function invalidateProfileCache(userId) {
   delete profilePicCache[userId];
 }
 
-// Show/hide auth steps
-function showAuthStep(stepId) {
-  ["authStep1", "forgotStep1", "forgotStep2", "forgotStep3"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = id === stepId ? "flex" : "none";
-  });
-}
-
 // =====================
-// AUTH — SIGNUP shows email field
+// AUTH
 // =====================
-
-// Email field is always visible — no toggle needed
-emailInput.style.display = "block";
-
 signupBtn.onclick = async () => {
   authMessage.textContent = "";
-  authMessage.className = "";
-
   const username = usernameInput.value.trim();
   const password = passwordInput.value;
-  const email    = emailInput.value.trim();
-
-  if (!username || !password) { authMessage.textContent = "Fill in username and password"; return; }
-  if (!email) { authMessage.textContent = "Enter your email for account recovery"; return; }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    authMessage.textContent = "Enter a valid email address";
-    return;
-  }
+  if (!username || !password) { authMessage.textContent = "Fill all fields"; return; }
 
   signupBtn.textContent = "Creating...";
   signupBtn.disabled = true;
 
+  const email = `${username}@fake.local`;
   const { data, error } = await supabaseClient.auth.signUp({ email, password });
 
   signupBtn.textContent = "Create account";
@@ -156,8 +130,6 @@ signupBtn.onclick = async () => {
 
   if (error) { authMessage.textContent = error.message; return; }
 
-  // With email confirmation OFF, data.user is immediately available
-  // With it ON, data.user exists but data.session is null until confirmed
   const userId = data.user?.id;
   if (!userId) {
     authMessage.textContent = "Signup failed — try logging in if you already have an account.";
@@ -166,7 +138,7 @@ signupBtn.onclick = async () => {
 
   const { error: insertError } = await supabaseClient
     .from("users")
-    .upsert({ id: userId, username, email }, { onConflict: "id" });
+    .upsert({ id: userId, username }, { onConflict: "id" });
 
   if (insertError) {
     console.error("users insert error:", insertError);
@@ -174,19 +146,11 @@ signupBtn.onclick = async () => {
     return;
   }
 
-  // If there's an active session, go straight to dashboard
-  if (data.session) {
-    init();
-  } else {
-    // Email confirmation is ON — tell the user to check their email
-    authMessage.textContent = "Account created! Check your email to confirm before logging in.";
-    authMessage.className = "auth-msg-success";
-  }
+  init();
 };
 
 loginBtn.onclick = async () => {
   authMessage.textContent = "";
-  authMessage.className = "";
   const username = usernameInput.value.trim();
   const password = passwordInput.value;
   if (!username || !password) { authMessage.textContent = "Fill all fields"; return; }
@@ -194,217 +158,14 @@ loginBtn.onclick = async () => {
   loginBtn.textContent = "Logging in...";
   loginBtn.disabled = true;
 
-  // Try signing in with stored real email
-  // Look up the user's email from the users table first
-  const { data: userRow } = await supabaseClient
-    .from("users").select("email").eq("username", username).maybeSingle();
-
-  let loginEmail;
-  if (userRow?.email) {
-    loginEmail = userRow.email;
-  } else {
-    // Legacy fallback: fake email pattern
-    loginEmail = `${username}@fake.local`;
-  }
-
-  const { error } = await supabaseClient.auth.signInWithPassword({ email: loginEmail, password });
+  const email = `${username}@fake.local`;
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
   loginBtn.textContent = "Log in";
   loginBtn.disabled = false;
 
-  if (error) {
-    authMessage.textContent = error.message;
-  } else {
-    init();
-  }
+  if (error) { authMessage.textContent = error.message; } else { init(); }
 };
-
-// =====================
-// FORGOT PASSWORD FLOW
-// =====================
-
-// Track the email discovered during step 1 so we can use it in step 3
-let forgotEmail = "";
-
-// Step 1: show forgot form
-document.getElementById("showForgotBtn").onclick = () => {
-  authMessage.textContent = "";
-  showAuthStep("forgotStep1");
-};
-
-// Step 1 → Back
-document.getElementById("forgotBackBtn").onclick = () => {
-  document.getElementById("forgotMessage1").textContent = "";
-  document.getElementById("forgotUsernameInput").value = "";
-  showAuthStep("authStep1");
-};
-
-// Step 1 → Send OTP code
-document.getElementById("forgotSendBtn").onclick = () => sendForgotCode();
-
-document.getElementById("forgotUsernameInput").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") sendForgotCode();
-});
-
-async function sendForgotCode() {
-  const msg      = document.getElementById("forgotMessage1");
-  const sendBtn  = document.getElementById("forgotSendBtn");
-  const username = document.getElementById("forgotUsernameInput").value.trim();
-
-  msg.textContent = "";
-  msg.className = "";
-
-  if (!username) { msg.textContent = "Enter your username"; return; }
-
-  sendBtn.textContent = "Sending...";
-  sendBtn.disabled = true;
-
-  // Look up the real email for this username
-  const { data: userRow, error: lookupError } = await supabaseClient
-    .from("users").select("email").eq("username", username).maybeSingle();
-
-  sendBtn.textContent = "Send code";
-  sendBtn.disabled = false;
-
-  if (lookupError || !userRow) {
-    msg.textContent = "No account found with that username.";
-    return;
-  }
-
-  if (!userRow.email) {
-    msg.textContent = "This account has no recovery email saved. Contact support.";
-    return;
-  }
-
-  forgotEmail = userRow.email;
-
-  // Send OTP — omit shouldCreateUser so it works regardless of confirmation state
-  const { error: otpError } = await supabaseClient.auth.signInWithOtp({ email: forgotEmail });
-
-  if (otpError) {
-    msg.textContent = "Failed to send code: " + otpError.message;
-    return;
-  }
-
-  msg.textContent = `Code sent to ${maskEmail(forgotEmail)}`;
-  msg.className = "auth-msg-success";
-
-  setTimeout(() => {
-    document.getElementById("forgotMessage1").textContent = "";
-    document.getElementById("forgotOtpInput").value = "";
-    showAuthStep("forgotStep2");
-  }, 1200);
-}
-
-// Mask email for display: j***@gmail.com
-function maskEmail(email) {
-  const [local, domain] = email.split("@");
-  const visible = local.slice(0, 1);
-  return `${visible}***@${domain}`;
-}
-
-// Step 2: Verify OTP code
-document.getElementById("forgotVerifyBtn").onclick = () => verifyOtp();
-
-document.getElementById("forgotOtpInput").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") verifyOtp();
-});
-
-// Resend code
-document.getElementById("forgotResendBtn").onclick = async () => {
-  const msg = document.getElementById("forgotMessage2");
-  msg.className = "";
-
-  if (!forgotEmail) { showAuthStep("forgotStep1"); return; }
-
-  const { error } = await supabaseClient.auth.signInWithOtp({ email: forgotEmail });
-
-  if (error) {
-    msg.textContent = "Could not resend: " + error.message;
-  } else {
-    msg.textContent = `Code resent to ${maskEmail(forgotEmail)}`;
-    msg.className = "auth-msg-success";
-  }
-};
-
-async function verifyOtp() {
-  const msg       = document.getElementById("forgotMessage2");
-  const verifyBtn = document.getElementById("forgotVerifyBtn");
-  const token     = document.getElementById("forgotOtpInput").value.trim();
-
-  msg.textContent = "";
-  msg.className = "";
-
-  if (!token || token.length < 6) { msg.textContent = "Enter the 6-digit code"; return; }
-  if (!forgotEmail) { showAuthStep("forgotStep1"); return; }
-
-  verifyBtn.textContent = "Verifying...";
-  verifyBtn.disabled = true;
-
-  const { error } = await supabaseClient.auth.verifyOtp({
-    email: forgotEmail,
-    token,
-    type: "magiclink",
-  });
-
-  verifyBtn.textContent = "Verify code";
-  verifyBtn.disabled = false;
-
-  if (error) {
-    msg.textContent = "Invalid or expired code. Try again.";
-    return;
-  }
-
-  // Verified — move to new password step
-  document.getElementById("newPasswordInput").value    = "";
-  document.getElementById("confirmPasswordInput").value = "";
-  document.getElementById("forgotMessage3").textContent = "";
-  showAuthStep("forgotStep3");
-}
-
-// Step 3: Save new password
-document.getElementById("forgotSaveBtn").onclick = () => saveNewPassword();
-
-document.getElementById("confirmPasswordInput").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") saveNewPassword();
-});
-
-async function saveNewPassword() {
-  const msg     = document.getElementById("forgotMessage3");
-  const saveBtn = document.getElementById("forgotSaveBtn");
-  const newPass = document.getElementById("newPasswordInput").value;
-  const confirm = document.getElementById("confirmPasswordInput").value;
-
-  msg.textContent = "";
-  msg.className = "";
-
-  if (!newPass) { msg.textContent = "Enter a new password"; return; }
-  if (newPass.length < 6) { msg.textContent = "Password must be at least 6 characters"; return; }
-  if (newPass !== confirm) { msg.textContent = "Passwords don't match"; return; }
-
-  saveBtn.textContent = "Saving...";
-  saveBtn.disabled = true;
-
-  const { error } = await supabaseClient.auth.updateUser({ password: newPass });
-
-  saveBtn.textContent = "Save new password";
-  saveBtn.disabled = false;
-
-  if (error) {
-    msg.textContent = "Failed to update password: " + error.message;
-    return;
-  }
-
-  msg.textContent = "Password updated! Logging you in...";
-  msg.className = "auth-msg-success";
-
-  // Already signed in via OTP — go straight to dashboard
-  setTimeout(() => {
-    forgotEmail = "";
-    showAuthStep("authStep1");
-    init();
-  }, 1500);
-}
 
 // =====================
 // BADGES TAB RENDER
@@ -440,7 +201,6 @@ async function init() {
   if (!data.user) {
     authPage.style.display = "flex";
     dashboardPage.style.display = "none";
-    showAuthStep("authStep1");
     return;
   }
   authPage.style.display = "none";
@@ -556,8 +316,8 @@ typeImageBtn.onclick = () => {
   thumbPreviewWrap.style.display = "none";
 };
 
-chooseVideoBtn.onclick    = () => videoInput.click();
-chooseThumbnailBtn.onclick = () => thumbnailInput.click();
+chooseVideoBtn.onclick     = () => videoInput.click();
+chooseThumbnailBtn.onclick  = () => thumbnailInput.click();
 chooseProfilePicBtn.onclick = () => profilePicInput.click();
 
 videoInput.onchange = () => {
@@ -842,8 +602,8 @@ function buildCardTitleRowSync(file, userMap) {
   const row = document.createElement("div");
   row.className = "card-title-row";
 
-  const user   = userMap[file.user_id];
-  const picUrl = user?.profile_pic_url || null;
+  const user     = userMap[file.user_id];
+  const picUrl   = user?.profile_pic_url || null;
   const username = user?.username || null;
 
   let avatarNode;
@@ -935,8 +695,8 @@ function renderGalleryPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / VIDEOS_PER_PAGE));
   if (galleryPage > totalPages) galleryPage = totalPages;
 
-  const start        = (galleryPage - 1) * VIDEOS_PER_PAGE;
-  const pageUploads  = filtered.slice(start, start + VIDEOS_PER_PAGE);
+  const start       = (galleryPage - 1) * VIDEOS_PER_PAGE;
+  const pageUploads = filtered.slice(start, start + VIDEOS_PER_PAGE);
 
   pageUploads.forEach((file) => {
     const url  = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
@@ -1113,7 +873,7 @@ async function loadLibrary() {
     const delBtn = document.createElement("button");
     delBtn.textContent = "Delete";
     delBtn.onclick = async () => {
-      await supabaseClient.from("uploads").delete().eq("id", file.id);
+      await supabaseClient.from("uploads").delete().eq("user_id", userId);
       await supabaseClient.storage.from("public-files").remove([file.file_path]);
       if (file.thumbnail_path && file.thumbnail_path !== file.file_path) {
         await supabaseClient.storage.from("public-files").remove([file.thumbnail_path]);
