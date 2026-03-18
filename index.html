@@ -21,11 +21,45 @@
   <img src="/NightClips/icon-192.png" alt="NightClips" class="auth-logo">
   <h1>NightClips</h1>
   <p class="auth-subtitle">Share your moments</p>
-  <input id="usernameInput" type="text" placeholder="Username" autocomplete="username">
-  <input id="passwordInput" type="password" placeholder="Password" autocomplete="current-password">
-  <button id="signupBtn">Create account</button>
-  <button id="loginBtn">Log in</button>
-  <p id="authMessage"></p>
+
+  <!-- STEP 1: LOGIN / SIGNUP -->
+  <div id="authStep1">
+    <input id="usernameInput" type="text" placeholder="Username" autocomplete="username">
+    <input id="passwordInput" type="password" placeholder="Password" autocomplete="current-password">
+    <!-- Email only shown during signup -->
+    <input id="emailInput" type="email" placeholder="Email (for account recovery)" autocomplete="email" style="display:none;">
+    <button id="signupBtn">Create account</button>
+    <button id="loginBtn">Log in</button>
+    <button id="showForgotBtn" class="auth-link-btn">Forgot password?</button>
+    <p id="authMessage"></p>
+  </div>
+
+  <!-- STEP 2: FORGOT — ENTER USERNAME -->
+  <div id="forgotStep1" style="display:none;">
+    <p class="auth-step-label">Reset password</p>
+    <input id="forgotUsernameInput" type="text" placeholder="Your username">
+    <button id="forgotSendBtn">Send code</button>
+    <button id="forgotBackBtn" class="auth-link-btn">Back to log in</button>
+    <p id="forgotMessage1"></p>
+  </div>
+
+  <!-- STEP 3: FORGOT — ENTER OTP CODE -->
+  <div id="forgotStep2" style="display:none;">
+    <p class="auth-step-label">Enter the 6-digit code sent to your email</p>
+    <input id="forgotOtpInput" type="text" placeholder="6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+    <button id="forgotVerifyBtn">Verify code</button>
+    <button id="forgotResendBtn" class="auth-link-btn">Resend code</button>
+    <p id="forgotMessage2"></p>
+  </div>
+
+  <!-- STEP 4: FORGOT — SET NEW PASSWORD -->
+  <div id="forgotStep3" style="display:none;">
+    <p class="auth-step-label">Choose a new password</p>
+    <input id="newPasswordInput" type="password" placeholder="New password" autocomplete="new-password">
+    <input id="confirmPasswordInput" type="password" placeholder="Confirm new password" autocomplete="new-password">
+    <button id="forgotSaveBtn">Save new password</button>
+    <p id="forgotMessage3"></p>
+  </div>
 </div>
 
 <!-- DASHBOARD -->
@@ -152,7 +186,6 @@
         <input type="text" id="editUsernameInput" placeholder="Your username">
       </div>
 
-      <!-- NEW: DESCRIPTION -->
       <div class="input-group">
         <label for="editDescriptionInput">Description</label>
         <textarea id="editDescriptionInput" placeholder="Tell people about you..." rows="3"
