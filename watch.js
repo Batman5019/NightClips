@@ -105,6 +105,9 @@ async function loadVideo() {
   // Auth user needed for likes + comments
   const authUser = await getAuthUser();
 
+  // Record a view
+  supabaseClient.from("upload_views").insert({ upload_id: file.id });
+
   // Load everything in parallel
   await Promise.all([
     loadReactions(file.id, authUser),
