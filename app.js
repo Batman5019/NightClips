@@ -128,30 +128,12 @@ function showAuthStep(stepId) {
 // AUTH — SIGNUP shows email field
 // =====================
 
-// Toggle email field visibility: visible during signup flow
-let isSignupMode = false;
+// Email field is always visible — no toggle needed
+emailInput.style.display = "block";
 
-signupBtn.addEventListener("mouseenter", () => {
-  if (!isSignupMode) {
-    isSignupMode = true;
-    emailInput.style.display = "block";
-    signupBtn.textContent = "Create account ↑ (add email above)";
-  }
-});
-
-// Actually just show it on first click if empty — cleaner UX
 signupBtn.onclick = async () => {
   authMessage.textContent = "";
   authMessage.className = "";
-
-  // Show the email field if it's hidden and empty
-  if (emailInput.style.display === "none" && !emailInput.value.trim()) {
-    emailInput.style.display = "block";
-    emailInput.focus();
-    authMessage.textContent = "Enter your email for account recovery, then click Create account again.";
-    authMessage.className = "auth-msg-success";
-    return;
-  }
 
   const username = usernameInput.value.trim();
   const password = passwordInput.value;
@@ -167,7 +149,6 @@ signupBtn.onclick = async () => {
   signupBtn.textContent = "Creating...";
   signupBtn.disabled = true;
 
-  // Use the real email for the auth account
   const { data, error } = await supabaseClient.auth.signUp({ email, password });
 
   signupBtn.textContent = "Create account";
@@ -175,7 +156,9 @@ signupBtn.onclick = async () => {
 
   if (error) { authMessage.textContent = error.message; return; }
 
-  const userId = data.user?.id || data.session?.user?.id;
+  // With email confirmation OFF, data.user is immediately available
+  // With it ON, data.user exists but data.session is null until confirmed
+  const userId = data.user?.id;
   if (!userId) {
     authMessage.textContent = "Signup failed — try logging in if you already have an account.";
     return;
@@ -191,7 +174,14 @@ signupBtn.onclick = async () => {
     return;
   }
 
-  init();
+  // If there's an active session, go straight to dashboard
+  if (data.session) {
+    init();
+  } else {
+    // Email confirmation is ON — tell the user to check their email
+    authMessage.textContent = "Account created! Check your email to confirm before logging in.";
+    authMessage.className = "auth-msg-success";
+  }
 };
 
 loginBtn.onclick = async () => {
@@ -288,11 +278,8 @@ async function sendForgotCode() {
 
   forgotEmail = userRow.email;
 
-  // Send OTP to the real email
-  const { error: otpError } = await supabaseClient.auth.signInWithOtp({
-    email: forgotEmail,
-    options: { shouldCreateUser: false },
-  });
+  // Send OTP — omit shouldCreateUser so it works regardless of confirmation state
+  const { error: otpError } = await supabaseClient.auth.signInWithOtp({ email: forgotEmail });
 
   if (otpError) {
     msg.textContent = "Failed to send code: " + otpError.message;
@@ -330,10 +317,7 @@ document.getElementById("forgotResendBtn").onclick = async () => {
 
   if (!forgotEmail) { showAuthStep("forgotStep1"); return; }
 
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email: forgotEmail,
-    options: { shouldCreateUser: false },
-  });
+  const { error } = await supabaseClient.auth.signInWithOtp({ email: forgotEmail });
 
   if (error) {
     msg.textContent = "Could not resend: " + error.message;
@@ -360,7 +344,7 @@ async function verifyOtp() {
   const { error } = await supabaseClient.auth.verifyOtp({
     email: forgotEmail,
     token,
-    type: "email",
+    type: "magiclink",
   });
 
   verifyBtn.textContent = "Verify code";
