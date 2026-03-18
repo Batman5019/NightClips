@@ -873,7 +873,7 @@ async function loadLibrary() {
     const delBtn = document.createElement("button");
     delBtn.textContent = "Delete";
     delBtn.onclick = async () => {
-      await supabaseClient.from("uploads").delete().eq("user_id", userId);
+      await supabaseClient.from("uploads").delete().eq("id", file.id);
       await supabaseClient.storage.from("public-files").remove([file.file_path]);
       if (file.thumbnail_path && file.thumbnail_path !== file.file_path) {
         await supabaseClient.storage.from("public-files").remove([file.thumbnail_path]);
