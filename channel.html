@@ -19,43 +19,48 @@
       <span>NightClips</span>
     </a>
   </nav>
-
   <main class="wrap">
     <section class="header">
       <div id="chanAvatar"></div>
       <div class="headerText">
-        <h1 id="chanName"></h1>
+        <!-- Name + badge inline -->
+        <div class="chan-name-row">
+          <h1 id="chanName"></h1>
+          <span id="chanBadge" class="chan-badge-slot"></span>
+        </div>
         <p id="chanDesc" class="desc"></p>
-
-        <div class="stats">
-          <div class="stat">
-            <span class="num" id="totalViews">0</span>
-            <span class="lbl">Total views</span>
+        <div class="header-bottom">
+          <div class="stats">
+            <div class="stat">
+              <span class="num" id="totalViews">0</span>
+              <span class="lbl">Total views</span>
+            </div>
+            <div class="stat">
+              <span class="num" id="uploadCount">0</span>
+              <span class="lbl">Uploads</span>
+            </div>
           </div>
-          <div class="stat">
-            <span class="num" id="uploadCount">0</span>
-            <span class="lbl">Uploads</span>
+          <!-- Watch button + count -->
+          <div class="watch-wrap">
+            <button id="watchBtn" class="watch-btn">Watch</button>
+            <span id="watcherCount" class="watcher-count">0 watching</span>
           </div>
         </div>
       </div>
     </section>
-
     <section class="section">
       <h2>Most viewed</h2>
       <div id="mostViewed" class="grid"></div>
     </section>
-
     <section class="section">
       <h2>Most liked</h2>
       <div id="mostLiked" class="grid"></div>
     </section>
-
     <section class="section">
       <h2>All uploads</h2>
       <div id="allUploads" class="grid"></div>
     </section>
   </main>
-
   <script src="channel.js"></script>
 </body>
 </html>
