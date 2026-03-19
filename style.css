@@ -1190,3 +1190,21 @@ html, body {
 }
 
 .user-result-item:hover .user-result-arrow { color: #666; }
+
+/* =========================
+   WATCHER BADGES
+========================= */
+.vid-uploader-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+}
+
+.username-badge {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 3px rgba(255,255,255,0.1));
+}
