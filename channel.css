@@ -91,13 +91,14 @@ html, body {
   align-items: center;
 }
 
-/* Badge image next to username */
+/* Badge next to channel name */
 .username-badge {
-  width: 36px;
-  height: 36px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
-  display: block;
-  filter: drop-shadow(0 0 4px rgba(255,255,255,0.15));
+  display: inline-block;
+  vertical-align: middle;
+  opacity: 0.9;
 }
 
 .desc {
@@ -182,48 +183,47 @@ html, body {
 ========================= */
 .watch-wrap {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+  align-items: center;
+  gap: 10px;
   flex-shrink: 0;
 }
 
 .watch-btn {
-  background: #161616;
-  border: 1px solid #2a2a2a;
-  color: #ccc;
-  padding: 10px 22px;
-  border-radius: 9px;
+  background: #111;
+  border: 1px solid #1e1e1e;
+  color: #888;
+  padding: 7px 16px;
+  border-radius: 7px;
   cursor: pointer;
-  font-weight: 700;
-  font-size: 0.9em;
+  font-weight: 600;
+  font-size: 0.82em;
   font-family: 'Inter', inherit;
   transition: background 0.18s, color 0.18s, border-color 0.18s;
   white-space: nowrap;
+  letter-spacing: 0.01em;
 }
 
 .watch-btn:hover {
-  background: #1e1e1e;
-  border-color: #383838;
-  color: #fff;
+  background: #181818;
+  border-color: #2a2a2a;
+  color: #ddd;
 }
 
 .watch-btn.watching {
-  background: #0e1e0e;
-  border-color: #1a3a1a;
-  color: #5caa5c;
+  background: #0c180c;
+  border-color: #183018;
+  color: #5a9a5a;
 }
 
 .watch-btn.watching:hover {
-  background: #0a180a;
-  color: #77cc77;
+  background: #0a140a;
+  color: #6ab96a;
 }
 
 .watcher-count {
   font-size: 0.76em;
-  color: #444;
+  color: #3a3a3a;
   font-weight: 600;
-  text-align: right;
 }
 
 /* =========================
@@ -335,6 +335,5 @@ html, body {
   .chan-avatar, .chan-avatar-ph { width: 58px; height: 58px; font-size: 22px; }
   .chan-name-row h1 { font-size: 1.15rem; }
   .header-bottom { flex-direction: column; align-items: flex-start; }
-  .watch-wrap { align-items: flex-start; }
-  .watcher-count { text-align: left; }
+  .watch-wrap { flex-wrap: wrap; }
 }
