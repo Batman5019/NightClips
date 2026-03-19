@@ -1202,8 +1202,8 @@ html, body {
 }
 
 .username-badge {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   object-fit: contain;
   flex-shrink: 0;
   opacity: 0.85;
