@@ -93,8 +93,8 @@ html, body {
 
 /* Badge next to channel name */
 .username-badge {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
   display: inline-block;
   vertical-align: middle;
