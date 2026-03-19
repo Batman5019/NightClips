@@ -515,8 +515,8 @@ html, body {
    WATCHER BADGE (watch page)
 ========================= */
 .username-badge {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   vertical-align: middle;
   margin-left: 5px;
