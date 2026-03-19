@@ -12,9 +12,8 @@ const banner = document.getElementById("newVideosBanner");
 
 supabaseClient
   .channel("uploads-watch")
-  .on("postgres_changes", { event: "INSERT", schema: "public", table: "uploads" }, (payload) => {
-    console.log("New upload detected", payload);
-    banner.style.display = "flex";
+  .on("postgres_changes", { event: "INSERT", schema: "public", table: "uploads" }, () => {
+    if (banner) banner.style.display = "flex";
   })
   .subscribe();
 
@@ -72,10 +71,7 @@ const uploadBar             = document.getElementById("uploadBar");
 const userIdText            = document.getElementById("userId");
 const uploadMessage         = document.getElementById("uploadMessage");
 const editUsernameInput     = document.getElementById("editUsernameInput");
-
-// NEW: profile description textarea
 const editDescriptionInput  = document.getElementById("editDescriptionInput");
-
 const profilePicInput       = document.getElementById("profilePicInput");
 const chooseProfilePicBtn   = document.getElementById("chooseProfilePicBtn");
 const saveProfileBtn        = document.getElementById("saveProfileBtn");
@@ -101,12 +97,6 @@ async function getUserRecord(userId) {
   return data;
 }
 
-async function getUsernameById(userId) {
-  const record = await getUserRecord(userId);
-  return record?.username || null;
-}
-
-// Get profile pic URL for any user id (cached in memory)
 const profilePicCache = {};
 async function getProfilePicUrl(userId) {
   if (profilePicCache[userId] !== undefined) return profilePicCache[userId];
@@ -115,9 +105,42 @@ async function getProfilePicUrl(userId) {
   return profilePicCache[userId];
 }
 
-// Invalidate cache for a user (called after profile save)
 function invalidateProfileCache(userId) {
   delete profilePicCache[userId];
+}
+
+// =====================
+// VIDEO FRAME CAPTURE
+// Extracts a frame from a video File and returns a Blob (JPEG)
+// =====================
+function captureVideoFrame(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.src = url;
+    video.muted = true;
+    video.playsInline = true;
+    video.crossOrigin = "anonymous";
+
+    video.addEventListener("loadeddata", () => {
+      // Seek to 1s or 10% of duration, whichever is smaller
+      video.currentTime = Math.min(1, video.duration * 0.1);
+    });
+
+    video.addEventListener("seeked", () => {
+      const canvas = document.createElement("canvas");
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.85);
+    });
+
+    // Fallback if seek doesn't fire
+    video.addEventListener("error", () => { URL.revokeObjectURL(url); resolve(null); });
+
+    video.load();
+  });
 }
 
 // =====================
@@ -129,17 +152,23 @@ signupBtn.onclick = async () => {
   const password = passwordInput.value;
   if (!username || !password) { authMessage.textContent = "Fill all fields"; return; }
 
+  signupBtn.textContent = "Creating...";
+  signupBtn.disabled = true;
+
   const email = `${username}@fake.local`;
   const { data, error } = await supabaseClient.auth.signUp({ email, password });
+
+  signupBtn.textContent = "Create account";
+  signupBtn.disabled = false;
+
   if (error) { authMessage.textContent = error.message; return; }
 
-  const userId = data.user?.id || data.session?.user?.id;
+  const userId = data.user?.id;
   if (!userId) {
     authMessage.textContent = "Signup failed — try logging in if you already have an account.";
     return;
   }
 
-  // Insert users row — ignore conflict in case it already exists
   const { error: insertError } = await supabaseClient
     .from("users")
     .upsert({ id: userId, username }, { onConflict: "id" });
@@ -159,8 +188,15 @@ loginBtn.onclick = async () => {
   const password = passwordInput.value;
   if (!username || !password) { authMessage.textContent = "Fill all fields"; return; }
 
+  loginBtn.textContent = "Logging in...";
+  loginBtn.disabled = true;
+
   const email = `${username}@fake.local`;
   const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+  loginBtn.textContent = "Log in";
+  loginBtn.disabled = false;
+
   if (error) { authMessage.textContent = error.message; } else { init(); }
 };
 
@@ -247,7 +283,6 @@ cancelDeleteBtn.onclick = () => {
   deleteModal.style.display = "none";
 };
 
-// Close modal if clicking outside
 deleteModal.onclick = (e) => {
   if (e.target === deleteModal) deleteModal.style.display = "none";
 };
@@ -261,7 +296,6 @@ confirmDeleteBtn.onclick = async () => {
 
   const userId = auth.user.id;
 
-  // 1. Delete all uploads from storage + DB
   const { data: uploads } = await supabaseClient
     .from("uploads").select("file_path, thumbnail_path").eq("user_id", userId);
 
@@ -276,23 +310,21 @@ confirmDeleteBtn.onclick = async () => {
     await supabaseClient.from("uploads").delete().eq("user_id", userId);
   }
 
-  // 2. Delete comments
   await supabaseClient.from("comments").delete().eq("user_id", userId);
-
-  // 3. Delete users row
   await supabaseClient.from("users").delete().eq("id", userId);
-
-  // 4. Sign out (auth user deletion requires admin key — sign out is safest from client)
   await supabaseClient.auth.signOut();
   window.location.reload();
 };
 
-let uploadType = "video"; // "video" or "image"
+// =====================
+// UPLOAD TYPE TOGGLE
+// =====================
+let uploadType = "video";
 
-const typeVideoBtn = document.getElementById("typeVideoBtn");
-const typeImageBtn = document.getElementById("typeImageBtn");
+const typeVideoBtn       = document.getElementById("typeVideoBtn");
+const typeImageBtn       = document.getElementById("typeImageBtn");
 const chooseFileBtnLabel = document.getElementById("chooseFileBtnLabel");
-const thumbnailRow = document.getElementById("thumbnailRow");
+const thumbnailRow       = document.getElementById("thumbnailRow");
 
 typeVideoBtn.onclick = () => {
   uploadType = "video";
@@ -313,18 +345,17 @@ typeImageBtn.onclick = () => {
   chooseFileBtnLabel.textContent = "Choose Image";
   videoFileName.textContent = "No file selected";
   videoInput.value = "";
-  thumbnailRow.style.display = "none"; // no separate thumbnail for images
+  thumbnailRow.style.display = "none";
   thumbPreviewWrap.style.display = "none";
 };
 
-chooseVideoBtn.onclick = () => videoInput.click();
-chooseThumbnailBtn.onclick = () => thumbnailInput.click();
+chooseVideoBtn.onclick     = () => videoInput.click();
+chooseThumbnailBtn.onclick  = () => thumbnailInput.click();
 chooseProfilePicBtn.onclick = () => profilePicInput.click();
 
 videoInput.onchange = () => {
   const file = videoInput.files[0];
   videoFileName.textContent = file?.name || "No file selected";
-  // Show image preview if image mode
   if (file && uploadType === "image") {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -391,7 +422,6 @@ async function loadProfile() {
 
   let userRecord = await getUserRecord(auth.user.id);
 
-  // Auto-repair: if no users row exists, create one now
   if (!userRecord) {
     const username = auth.user.email?.split("@")[0] || "user";
     await supabaseClient
@@ -430,9 +460,9 @@ saveProfileBtn.onclick = async () => {
     return;
   }
 
-  const newUsername = editUsernameInput.value.trim();
+  const newUsername    = editUsernameInput.value.trim();
   const newDescription = (editDescriptionInput ? editDescriptionInput.value : "").trim();
-  const picFile = profilePicInput.files[0];
+  const picFile        = profilePicInput.files[0];
 
   if (!newUsername) {
     profileMessage.textContent = "Username cannot be empty";
@@ -452,7 +482,6 @@ saveProfileBtn.onclick = async () => {
       .upload(path, picFile, { upsert: true });
 
     if (picError) {
-      console.error("Profile pic upload error:", picError);
       profileMessage.textContent = "Profile pic upload failed: " + picError.message;
       saveProfileBtn.textContent = "Save changes";
       saveProfileBtn.disabled = false;
@@ -468,14 +497,12 @@ saveProfileBtn.onclick = async () => {
     .from("users").update(updateData).eq("id", auth.user.id);
 
   if (updateError) {
-    console.error("Profile update error:", updateError);
     profileMessage.textContent = "Failed: " + updateError.message;
     saveProfileBtn.textContent = "Save changes";
     saveProfileBtn.disabled = false;
     return;
   }
 
-  // Update UI immediately
   if (updateData.profile_pic_url) {
     profilePicPreview.src = updateData.profile_pic_url;
     profilePicPreview.style.display = "block";
@@ -506,8 +533,8 @@ uploadBtn.onclick = async () => {
   const thumbnailFile = thumbnailInput.files[0];
   const title         = document.getElementById("videoTitleInput").value.trim();
 
-  if (!mediaFile)  { uploadMessage.textContent = "No file selected"; return; }
-  if (!title)      { uploadMessage.textContent = "Enter a title"; return; }
+  if (!mediaFile) { uploadMessage.textContent = "No file selected"; return; }
+  if (!title)     { uploadMessage.textContent = "Enter a title"; return; }
 
   uploadMessage.textContent = "Uploading...";
   uploadBar.style.width = "0%";
@@ -515,10 +542,10 @@ uploadBtn.onclick = async () => {
   const { data: auth } = await supabaseClient.auth.getUser();
   if (!auth.user) { uploadMessage.textContent = "Not logged in"; return; }
 
-  const timestamp       = Date.now();
-  const sanitizedName   = mediaFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
-  const mediaPath       = `${auth.user.id}/${timestamp}_${sanitizedName}`;
-  const isImage         = mediaFile.type.startsWith("image");
+  const timestamp     = Date.now();
+  const sanitizedName = mediaFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
+  const mediaPath     = `${auth.user.id}/${timestamp}_${sanitizedName}`;
+  const isImage       = mediaFile.type.startsWith("image");
 
   let progress = 0;
   const interval = setInterval(() => {
@@ -535,19 +562,33 @@ uploadBtn.onclick = async () => {
     let thumbnailPath = null;
 
     if (isImage) {
-      // For images, the image itself is the thumbnail
+      // Image itself is the thumbnail
       thumbnailPath = mediaPath;
     } else if (thumbnailFile) {
+      // User provided a thumbnail
       const sanitizedThumb = thumbnailFile.name.replace(/[^a-z0-9.\-_]/gi, "_");
       thumbnailPath = `${auth.user.id}/thumbnails/${timestamp}_${sanitizedThumb}`;
       const { error: thumbError } = await supabaseClient.storage
         .from("public-files").upload(thumbnailPath, thumbnailFile, { upsert: true });
       if (thumbError) throw thumbError;
+    } else {
+      // No thumbnail — capture a frame from the video
+      uploadMessage.textContent = "Generating thumbnail...";
+      const frameBlob = await captureVideoFrame(mediaFile);
+      if (frameBlob) {
+        thumbnailPath = `${auth.user.id}/thumbnails/${timestamp}_thumb.jpg`;
+        const { error: frameError } = await supabaseClient.storage
+          .from("public-files").upload(thumbnailPath, frameBlob, { upsert: true, contentType: "image/jpeg" });
+        if (frameError) {
+          console.warn("Frame upload failed, continuing without thumbnail:", frameError);
+          thumbnailPath = null;
+        }
+      }
     }
 
     await supabaseClient.from("uploads").insert({
       user_id:        auth.user.id,
-      title:          title,
+      title,
       file_name:      mediaFile.name,
       file_path:      mediaPath,
       file_type:      mediaFile.type,
@@ -556,9 +597,9 @@ uploadBtn.onclick = async () => {
 
     videoInput.value = null;
     thumbnailInput.value = null;
-    videoFileName.textContent       = "No file selected";
-    thumbnailFileName.textContent   = "No thumbnail selected";
-    thumbPreviewWrap.style.display  = "none";
+    videoFileName.textContent      = "No file selected";
+    thumbnailFileName.textContent  = "No thumbnail selected";
+    thumbPreviewWrap.style.display = "none";
     document.getElementById("videoTitleInput").value = "";
     uploadBar.style.width = "0%";
     uploadMessage.textContent = "Upload complete!";
@@ -590,7 +631,7 @@ function createVideoCardContent(url) {
 }
 
 // =====================
-// BATCH FETCH ALL USER RECORDS NEEDED FOR A LIST OF UPLOADS
+// BATCH FETCH USERS
 // =====================
 async function fetchUsersForUploads(uploads) {
   const uniqueIds = [...new Set(uploads.map((u) => u.user_id))];
@@ -605,13 +646,12 @@ async function fetchUsersForUploads(uploads) {
   return map;
 }
 
-// Build title row synchronously using pre-fetched user map
 function buildCardTitleRowSync(file, userMap) {
   const row = document.createElement("div");
   row.className = "card-title-row";
 
-  const user = userMap[file.user_id];
-  const picUrl = user?.profile_pic_url || null;
+  const user     = userMap[file.user_id];
+  const picUrl   = user?.profile_pic_url || null;
   const username = user?.username || null;
 
   let avatarNode;
@@ -628,7 +668,6 @@ function buildCardTitleRowSync(file, userMap) {
     avatarNode = av;
   }
 
-  // NEW: avatar goes to channel page
   avatarNode.style.cursor = "pointer";
   avatarNode.onclick = (e) => {
     e.stopPropagation();
@@ -642,7 +681,6 @@ function buildCardTitleRowSync(file, userMap) {
 
   const titleEl = document.createElement("p");
   titleEl.className = "vid-title";
-  // Strip legacy [username] suffix if still present
   titleEl.textContent = (file.title || "").replace(/\s*\[.+\]\s*$/, "").trim();
   textWrap.appendChild(titleEl);
 
@@ -650,14 +688,11 @@ function buildCardTitleRowSync(file, userMap) {
     const uploaderEl = document.createElement("p");
     uploaderEl.className = "vid-uploader";
     uploaderEl.textContent = username;
-
-    // NEW: username goes to channel page
     uploaderEl.style.cursor = "pointer";
     uploaderEl.onclick = (e) => {
       e.stopPropagation();
       window.location.href = `/NightClips/channel.html?id=${file.user_id}`;
     };
-
     textWrap.appendChild(uploaderEl);
   }
 
@@ -675,9 +710,6 @@ let galleryAuthUser   = null;
 let galleryPage       = 1;
 let galleryQuery      = "";
 
-// =====================
-// LOAD GALLERY (ALL VIDEOS)
-// =====================
 async function loadGallery() {
   const { data: uploads, error } = await supabaseClient
     .from("uploads").select("*").order("created_at", { ascending: false });
@@ -694,19 +726,14 @@ async function loadGallery() {
   const { data: authData } = await supabaseClient.auth.getUser();
   galleryAuthUser = authData.user || null;
 
-  // Reset to page 1 when gallery freshly loads
   galleryPage = 1;
   renderGalleryPage();
 }
 
-// =====================
-// RENDER GALLERY PAGE
-// =====================
 function renderGalleryPage() {
   const allVideos = document.getElementById("allVideos");
   allVideos.innerHTML = "";
 
-  // Filter by search query
   const filtered = galleryQuery
     ? galleryAllUploads.filter((f) =>
         (f.title || "").replace(/\s*\[.+\]\s*$/, "").trim().toLowerCase().includes(galleryQuery)
@@ -716,16 +743,15 @@ function renderGalleryPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / VIDEOS_PER_PAGE));
   if (galleryPage > totalPages) galleryPage = totalPages;
 
-  const start = (galleryPage - 1) * VIDEOS_PER_PAGE;
+  const start       = (galleryPage - 1) * VIDEOS_PER_PAGE;
   const pageUploads = filtered.slice(start, start + VIDEOS_PER_PAGE);
 
   pageUploads.forEach((file) => {
-    const url = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
+    const url  = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
     const card = document.createElement("div");
     card.className = "card";
     card.dataset.title = (file.title || "").replace(/\s*\[.+\]\s*$/, "").trim().toLowerCase();
 
-    // Clickable media area — always navigates to watch page, never plays inline
     const mediaLink = document.createElement("a");
     mediaLink.href = `/NightClips/watch.html?id=${file.id}`;
     mediaLink.className = "card-media-link";
@@ -737,12 +763,10 @@ function renderGalleryPage() {
       const img = document.createElement("img");
       img.src = thumbUrl;
       img.className = "card-thumb";
-      // Images don't need the 16:9 crop — show full image
       if (isImage) img.style.aspectRatio = "auto";
       img.alt = "";
       mediaLink.appendChild(img);
     } else {
-      // No thumbnail — dark placeholder with play icon
       const placeholder = document.createElement("div");
       placeholder.className = "card-thumb-placeholder";
       placeholder.innerHTML = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="rgba(255,255,255,0.5)" stroke="none"/></svg>`;
@@ -751,7 +775,6 @@ function renderGalleryPage() {
 
     card.appendChild(mediaLink);
 
-    // Title row also links to watch page (but username/avatar inside go to channel)
     const titleRow = buildCardTitleRowSync(file, galleryUserMap);
     titleRow.style.cursor = "pointer";
     titleRow.onclick = () => { window.location.href = `/NightClips/watch.html?id=${file.id}`; };
@@ -769,15 +792,10 @@ function renderGalleryPage() {
       delBtn.textContent = "Delete";
       delBtn.onclick = async () => {
         await supabaseClient.from("uploads").delete().eq("id", file.id);
-
-        // remove file
         await supabaseClient.storage.from("public-files").remove([file.file_path]);
-
-        // FIX: don't remove same path twice for images
         if (file.thumbnail_path && file.thumbnail_path !== file.file_path) {
           await supabaseClient.storage.from("public-files").remove([file.thumbnail_path]);
         }
-
         await loadGallery();
         await loadLibrary();
         await updateBadges();
@@ -791,9 +809,6 @@ function renderGalleryPage() {
   renderPagination(totalPages, filtered.length);
 }
 
-// =====================
-// RENDER PAGINATION
-// =====================
 function renderPagination(totalPages, totalCount) {
   let pager = document.getElementById("galleryPagination");
   if (!pager) {
@@ -806,11 +821,9 @@ function renderPagination(totalPages, totalCount) {
 
   if (totalPages <= 1) return;
 
-  // Controls row
   const controls = document.createElement("div");
   controls.className = "pagination-controls";
 
-  // Prev button
   const prev = document.createElement("button");
   prev.textContent = "←";
   prev.className = "page-btn nav-btn" + (galleryPage === 1 ? " disabled" : "");
@@ -818,7 +831,6 @@ function renderPagination(totalPages, totalCount) {
   prev.onclick = () => { galleryPage--; renderGalleryPage(); window.scrollTo(0, 0); };
   controls.appendChild(prev);
 
-  // Page number buttons — show up to 2 around current page
   const range = 2;
   for (let i = 1; i <= totalPages; i++) {
     if (i === 1 || i === totalPages || (i >= galleryPage - range && i <= galleryPage + range)) {
@@ -844,7 +856,6 @@ function renderPagination(totalPages, totalCount) {
     }
   }
 
-  // Next button
   const next = document.createElement("button");
   next.textContent = "→";
   next.className = "page-btn nav-btn" + (galleryPage === totalPages ? " disabled" : "");
@@ -854,7 +865,6 @@ function renderPagination(totalPages, totalCount) {
 
   pager.appendChild(controls);
 
-  // Label below controls
   const label = document.createElement("span");
   label.className = "page-label";
   label.textContent = `Page ${galleryPage} of ${totalPages}  ·  ${totalCount} video${totalCount !== 1 ? "s" : ""}`;
@@ -862,16 +872,82 @@ function renderPagination(totalPages, totalCount) {
 }
 
 // =====================
-// SEARCH / FILTER GALLERY
+// SEARCH — videos + users
 // =====================
+let searchDebounce = null;
+
 document.getElementById("searchInput").addEventListener("input", function () {
   galleryQuery = this.value.toLowerCase().trim();
   galleryPage  = 1;
   renderGalleryPage();
+
+  // User search with debounce
+  clearTimeout(searchDebounce);
+  const q = this.value.trim();
+
+  if (!q) {
+    document.getElementById("userResults").style.display = "none";
+    document.getElementById("userResultsList").innerHTML = "";
+    return;
+  }
+
+  searchDebounce = setTimeout(() => searchUsers(q), 300);
 });
 
+async function searchUsers(query) {
+  const { data: users, error } = await supabaseClient
+    .from("users")
+    .select("id, username, profile_pic_url")
+    .ilike("username", `%${query}%`)
+    .limit(6);
+
+  const wrap = document.getElementById("userResults");
+  const list = document.getElementById("userResultsList");
+  list.innerHTML = "";
+
+  if (error || !users || users.length === 0) {
+    wrap.style.display = "none";
+    return;
+  }
+
+  wrap.style.display = "block";
+
+  users.forEach((user) => {
+    const item = document.createElement("div");
+    item.className = "user-result-item";
+    item.style.cursor = "pointer";
+    item.onclick = () => { window.location.href = `/NightClips/channel.html?id=${user.id}`; };
+
+    // Avatar
+    if (user.profile_pic_url) {
+      const av = document.createElement("img");
+      av.src = user.profile_pic_url;
+      av.className = "user-result-avatar";
+      item.appendChild(av);
+    } else {
+      const av = document.createElement("div");
+      av.className = "user-result-avatar-ph";
+      av.textContent = (user.username || "?")[0].toUpperCase();
+      item.appendChild(av);
+    }
+
+    const name = document.createElement("span");
+    name.className = "user-result-name";
+    name.textContent = user.username || "Unknown";
+    item.appendChild(name);
+
+    // Arrow icon
+    const arrow = document.createElement("span");
+    arrow.className = "user-result-arrow";
+    arrow.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
+    item.appendChild(arrow);
+
+    list.appendChild(item);
+  });
+}
+
 // =====================
-// LOAD LIBRARY (USER VIDEOS)
+// LIBRARY
 // =====================
 async function loadLibrary() {
   const userVideos = document.getElementById("userVideos");
@@ -887,7 +963,7 @@ async function loadLibrary() {
   const userMap = uploads.length > 0 ? await fetchUsersForUploads(uploads) : {};
 
   uploads.forEach((file) => {
-    const url = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
+    const url  = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
     const card = document.createElement("div");
     card.className = "card";
 
@@ -915,14 +991,10 @@ async function loadLibrary() {
     delBtn.textContent = "Delete";
     delBtn.onclick = async () => {
       await supabaseClient.from("uploads").delete().eq("id", file.id);
-
       await supabaseClient.storage.from("public-files").remove([file.file_path]);
-
-      // FIX: don't remove same path twice for images
       if (file.thumbnail_path && file.thumbnail_path !== file.file_path) {
         await supabaseClient.storage.from("public-files").remove([file.thumbnail_path]);
       }
-
       await loadGallery();
       await loadLibrary();
       await updateBadges();
