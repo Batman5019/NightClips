@@ -510,3 +510,15 @@ html, body {
   .react-btn,
   .watch-download-btn { padding: 8px 11px; font-size: 0.82em; }
 }
+
+/* =========================
+   WATCHER BADGE (watch page)
+========================= */
+.username-badge {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-left: 6px;
+  filter: drop-shadow(0 0 3px rgba(255,255,255,0.1));
+}
