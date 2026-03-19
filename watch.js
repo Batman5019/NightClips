@@ -203,11 +203,10 @@ async function handleReaction(uploadId, userId, value) {
   const likeBtn    = document.getElementById("likeBtn");
   const dislikeBtn = document.getElementById("dislikeBtn");
 
-  // Optimistic: disable while saving
   likeBtn.disabled    = true;
   dislikeBtn.disabled = true;
 
-  // Fetch current reaction
+  // Check what the user currently has
   const { data: existing } = await supabaseClient
     .from("upload_reactions")
     .select("id, value")
@@ -217,26 +216,28 @@ async function handleReaction(uploadId, userId, value) {
 
   if (existing) {
     if (existing.value === value) {
-      // Same button clicked → remove reaction
+      // Same button → remove (unlike/undislike)
       await supabaseClient
         .from("upload_reactions")
         .delete()
-        .eq("id", existing.id);
+        .eq("upload_id", uploadId)
+        .eq("user_id", userId);
     } else {
-      // Different button → switch reaction
+      // Opposite button → update value in place
       await supabaseClient
         .from("upload_reactions")
         .update({ value })
-        .eq("id", existing.id);
+        .eq("upload_id", uploadId)
+        .eq("user_id", userId);
     }
   } else {
-    // No existing reaction → insert
+    // No reaction yet → insert
     await supabaseClient
       .from("upload_reactions")
       .insert({ upload_id: uploadId, user_id: userId, value });
   }
 
-  // Re-fetch counts + own reaction and refresh UI
+  // Re-fetch and update UI
   const { data: reactions } = await supabaseClient
     .from("upload_reactions")
     .select("user_id, value")
