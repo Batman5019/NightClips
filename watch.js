@@ -94,7 +94,38 @@ async function loadVideo() {
   const uploader   = await getUserRecord(file.user_id);
   const avatarWrap = document.getElementById("watchAvatarWrap");
   avatarWrap.appendChild(makeAvatar(uploader?.profile_pic_url, 34));
-  document.getElementById("watchUsername").textContent = uploader?.username || "Unknown";
+
+  const username = uploader?.username || "Unknown";
+  document.getElementById("watchUsername").textContent = username;
+
+  // Fetch watcher count and show badge next to username
+  const { count: watcherCount } = await supabaseClient
+    .from("watches")
+    .select("id", { count: "exact", head: true })
+    .eq("channel_id", file.user_id);
+
+  const WATCHER_BADGES = [
+    { min: 10000, img: "https://iili.io/qjDTvbR.png",  alt: "10k Watchers" },
+    { min: 1000,  img: "https://iili.io/qjDTOJa.png", alt: "1k Watchers"  },
+    { min: 100,   img: "https://iili.io/qjDTSxp.png",  alt: "100 Watchers" },
+  ];
+  const CREATOR_BADGE = { img: "https://iili.io/qjDTL5G.png", alt: "Creator" };
+
+  function getWatchBadge(uname, wCount) {
+    if (uname === "NightClipsOfficial") return CREATOR_BADGE;
+    for (const b of WATCHER_BADGES) { if (wCount >= b.min) return b; }
+    return null;
+  }
+
+  const badge = getWatchBadge(username, watcherCount || 0);
+  if (badge) {
+    const badgeImg = document.createElement("img");
+    badgeImg.src       = badge.img;
+    badgeImg.alt       = badge.alt;
+    badgeImg.title     = badge.alt;
+    badgeImg.className = "username-badge";
+    document.getElementById("watchUsername").after(badgeImg);
+  }
 
   const watchUploaderEl = document.getElementById("watchUploader");
   watchUploaderEl.style.cursor = "pointer";
