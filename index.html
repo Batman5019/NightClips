@@ -75,7 +75,15 @@
 
   <!-- GALLERY -->
   <div id="gallery" class="tab-content">
-    <input type="text" id="searchInput" placeholder="Search..." class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search videos or users..." class="search-bar">
+
+    <!-- USER RESULTS (shown only when searching) -->
+    <div id="userResults" style="display:none;">
+      <p class="search-section-label">Users</p>
+      <div id="userResultsList" class="user-results-list"></div>
+      <p class="search-section-label" style="margin-top:18px;">Videos</p>
+    </div>
+
     <div id="allVideos" class="video-grid"></div>
   </div>
 
@@ -152,7 +160,6 @@
         <input type="text" id="editUsernameInput" placeholder="Your username">
       </div>
 
-      <!-- NEW: DESCRIPTION -->
       <div class="input-group">
         <label for="editDescriptionInput">Description</label>
         <textarea id="editDescriptionInput" placeholder="Tell people about you..." rows="3"
@@ -179,7 +186,6 @@
       <button id="saveProfileBtn" class="upload-submit-btn">Save changes</button>
       <p id="profileMessage"></p>
 
-      <!-- Danger zone -->
       <div class="danger-zone">
         <p class="danger-zone-label">Account</p>
         <button id="logoutBtn" class="danger-btn logout-btn">
