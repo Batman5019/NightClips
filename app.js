@@ -130,34 +130,56 @@ function captureVideoFrame(file) {
 
 // =====================
 // FRAME CAPTURE — from a remote URL (used in gallery/library cards)
-// Draws a video frame into an existing <img> element
+// Throttled to max 2 concurrent captures to prevent lag
 // =====================
-function attachFrameFromUrl(videoUrl, imgEl) {
-  const video       = document.createElement("video");
-  video.src         = videoUrl;
-  video.crossOrigin = "anonymous";
-  video.muted       = true;
-  video.playsInline = true;
-  video.preload     = "metadata";
+let _frameQueue = [];
+let _frameActive = 0;
+const FRAME_CONCURRENCY = 2;
 
-  video.addEventListener("loadedmetadata", () => {
-    video.currentTime = Math.min(1, video.duration * 0.1);
+function attachFrameFromUrl(videoUrl, imgEl) {
+  _frameQueue.push({ videoUrl, imgEl });
+  _drainFrameQueue();
+}
+
+function _drainFrameQueue() {
+  while (_frameActive < FRAME_CONCURRENCY && _frameQueue.length > 0) {
+    const { videoUrl, imgEl } = _frameQueue.shift();
+    _frameActive++;
+    _captureFrame(videoUrl, imgEl).finally(() => {
+      _frameActive--;
+      _drainFrameQueue();
+    });
+  }
+}
+
+function _captureFrame(videoUrl, imgEl) {
+  return new Promise((resolve) => {
+    const video       = document.createElement("video");
+    video.src         = videoUrl;
+    video.crossOrigin = "anonymous";
+    video.muted       = true;
+    video.playsInline = true;
+    video.preload     = "metadata";
+
+    video.addEventListener("loadedmetadata", () => {
+      video.currentTime = Math.min(1, video.duration * 0.1);
+    });
+    video.addEventListener("seeked", () => {
+      try {
+        const canvas  = document.createElement("canvas");
+        canvas.width  = video.videoWidth  || 640;
+        canvas.height = video.videoHeight || 360;
+        canvas.getContext("2d").drawImage(video, 0, 0);
+        imgEl.src = canvas.toDataURL("image/jpeg", 0.85);
+      } catch (e) {
+        console.warn("Frame capture blocked (CORS):", e);
+      }
+      video.src = "";
+      resolve();
+    });
+    video.addEventListener("error", () => { video.src = ""; resolve(); });
+    video.load();
   });
-  video.addEventListener("seeked", () => {
-    try {
-      const canvas  = document.createElement("canvas");
-      canvas.width  = video.videoWidth  || 640;
-      canvas.height = video.videoHeight || 360;
-      canvas.getContext("2d").drawImage(video, 0, 0);
-      imgEl.src = canvas.toDataURL("image/jpeg", 0.85);
-    } catch (e) {
-      // Cross-origin taint — leave placeholder showing
-      console.warn("Frame capture blocked (CORS):", e);
-    }
-    video.src = "";
-  });
-  video.addEventListener("error", () => { video.src = ""; });
-  video.load();
 }
 
 // =====================
