@@ -283,6 +283,7 @@ async function init() {
   await loadGallery();
   await loadLibrary();
   await updateBadges();
+  await initAdminPanel();
 }
 
 init();
@@ -653,10 +654,11 @@ const WATCHER_BADGES = [
 const CREATOR_BADGE = { img: "https://iili.io/qjDTL5G.png", alt: "Creator" };
 const watcherCountCache = {};
 
-function getBadgeForUser(username, watcherCount) {
+function getBadgeForUser(username, watcherCount, override) {
   if (username === "NightClipsOfficial") return CREATOR_BADGE;
+  const effective = (override !== null && override !== undefined) ? override : watcherCount;
   for (const b of WATCHER_BADGES) {
-    if (watcherCount >= b.min) return b;
+    if (effective >= b.min) return b;
   }
   return null;
 }
@@ -674,7 +676,7 @@ function makeBadgeEl(badge) {
 async function fetchUsersForUploads(uploads) {
   const uniqueIds = [...new Set(uploads.map((u) => u.user_id))];
   const { data, error } = await supabaseClient
-    .from("users").select("id, username, profile_pic_url").in("id", uniqueIds);
+    .from("users").select("id, username, profile_pic_url, watcher_override").in("id", uniqueIds);
   if (error) { console.error("Error batch-fetching users:", error); return {}; }
   const map = {};
   (data || []).forEach((u) => {
@@ -739,8 +741,9 @@ function buildCardTitleRowSync(file, userMap) {
     uploaderEl.textContent = username;
     uploaderRow.appendChild(uploaderEl);
 
-    const wCount = watcherCountCache[file.user_id] || 0;
-    const badge  = getBadgeForUser(username, wCount);
+    const wCount   = watcherCountCache[file.user_id] || 0;
+    const override = user?.watcher_override ?? null;
+    const badge    = getBadgeForUser(username, wCount, override);
     if (badge) uploaderRow.appendChild(makeBadgeEl(badge));
 
     textWrap.appendChild(uploaderRow);
@@ -1069,3 +1072,185 @@ document.addEventListener("keydown", (e) => {
   e.preventDefault();
   if (vid.paused) vid.play(); else vid.pause();
 });
+
+// =====================
+// ADMIN PANEL
+// Only visible to NightClipsOfficial
+// =====================
+const ADMIN_USERNAME = "NightClipsOfficial";
+let adminTargetUserId = null;
+
+async function initAdminPanel() {
+  const { data: auth } = await supabaseClient.auth.getUser();
+  if (!auth.user) return;
+
+  const record = await getUserRecord(auth.user.id);
+  if (!record || record.username !== ADMIN_USERNAME) return;
+
+  // Show admin tab
+  document.getElementById("adminTabBtn").style.display = "inline-flex";
+
+  // Search
+  document.getElementById("adminSearchBtn").onclick = adminSearch;
+  document.getElementById("adminSearchInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") adminSearch();
+  });
+
+  // Set watchers
+  document.getElementById("adminSetWatchersBtn").onclick = adminSetWatchers;
+
+  // Ban
+  document.getElementById("adminBanBtn").onclick = adminBanUser;
+}
+
+async function adminSearch() {
+  const query    = document.getElementById("adminSearchInput").value.trim();
+  const msg      = document.getElementById("adminSearchMsg");
+  const resultEl = document.getElementById("adminUserResult");
+
+  msg.textContent   = "";
+  msg.className     = "admin-msg";
+  resultEl.style.display = "none";
+  adminTargetUserId = null;
+
+  if (!query) { msg.textContent = "Enter a username"; return; }
+
+  const { data: users, error } = await supabaseClient
+    .from("users")
+    .select("id, username, profile_pic_url, watcher_override")
+    .ilike("username", query)
+    .limit(1);
+
+  if (error || !users || users.length === 0) {
+    msg.textContent = "No user found";
+    return;
+  }
+
+  const user = users[0];
+
+  // Block searching for yourself
+  if (user.username === ADMIN_USERNAME) {
+    msg.textContent = "Cannot target admin account";
+    return;
+  }
+
+  adminTargetUserId = user.id;
+
+  // Get real watcher count + upload count
+  const [{ count: watcherCount }, { count: uploadCount }] = await Promise.all([
+    supabaseClient.from("watches").select("id", { count: "exact", head: true }).eq("channel_id", user.id),
+    supabaseClient.from("uploads").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+  ]);
+
+  // Render avatar
+  const avWrap = document.getElementById("adminUserAvatar");
+  avWrap.innerHTML = "";
+  if (user.profile_pic_url) {
+    const img = document.createElement("img");
+    img.src = user.profile_pic_url; img.alt = "";
+    avWrap.appendChild(img);
+  } else {
+    const ph = document.createElement("div");
+    ph.className   = "admin-avatar-ph";
+    ph.textContent = (user.username || "?")[0].toUpperCase();
+    avWrap.appendChild(ph);
+  }
+
+  document.getElementById("adminUserName").textContent = user.username;
+  document.getElementById("adminUserMeta").textContent =
+    `${watcherCount || 0} watchers · ${uploadCount || 0} uploads` +
+    (user.watcher_override !== null ? ` · Override: ${user.watcher_override}` : "");
+
+  // Pre-fill watcher input with current override or real count
+  document.getElementById("adminWatcherInput").value =
+    user.watcher_override !== null ? user.watcher_override : (watcherCount || 0);
+
+  // Reset messages
+  document.getElementById("adminWatcherMsg").textContent = "";
+  document.getElementById("adminWatcherMsg").className   = "admin-msg";
+  document.getElementById("adminBanMsg").textContent     = "";
+  document.getElementById("adminBanMsg").className       = "admin-msg";
+
+  resultEl.style.display = "flex";
+}
+
+async function adminSetWatchers() {
+  const msg   = document.getElementById("adminWatcherMsg");
+  const btn   = document.getElementById("adminSetWatchersBtn");
+  const value = parseInt(document.getElementById("adminWatcherInput").value, 10);
+
+  msg.textContent = ""; msg.className = "admin-msg";
+
+  if (!adminTargetUserId) { msg.textContent = "No user selected"; return; }
+  if (isNaN(value) || value < 0) { msg.textContent = "Enter a valid number"; return; }
+
+  btn.textContent = "Saving..."; btn.disabled = true;
+
+  const { error } = await supabaseClient
+    .from("users")
+    .update({ watcher_override: value })
+    .eq("id", adminTargetUserId);
+
+  btn.textContent = "Set"; btn.disabled = false;
+
+  if (error) {
+    msg.textContent = "Failed: " + error.message;
+    msg.className   = "admin-msg error";
+  } else {
+    msg.textContent = `Set to ${value} ✓`;
+    msg.className   = "admin-msg success";
+    // Re-run search to refresh meta
+    adminSearch();
+  }
+}
+
+async function adminBanUser() {
+  const msg = document.getElementById("adminBanMsg");
+  const btn = document.getElementById("adminBanBtn");
+
+  msg.textContent = ""; msg.className = "admin-msg";
+
+  if (!adminTargetUserId) { msg.textContent = "No user selected"; return; }
+
+  const confirmed = window.confirm(
+    `Remove ${document.getElementById("adminUserName").textContent}? This deletes their account and all uploads permanently.`
+  );
+  if (!confirmed) return;
+
+  btn.textContent = "Removing..."; btn.disabled = true;
+
+  const userId = adminTargetUserId;
+
+  // Delete uploads from storage
+  const { data: uploads } = await supabaseClient
+    .from("uploads").select("file_path, thumbnail_path").eq("user_id", userId);
+
+  if (uploads && uploads.length > 0) {
+    const paths = uploads.flatMap(u => [
+      u.file_path,
+      u.thumbnail_path && u.thumbnail_path !== u.file_path ? u.thumbnail_path : null
+    ]).filter(Boolean);
+    if (paths.length > 0)
+      await supabaseClient.storage.from("public-files").remove(paths);
+    await supabaseClient.from("uploads").delete().eq("user_id", userId);
+  }
+
+  // Delete comments, watches, reactions, user row
+  await supabaseClient.from("comments").delete().eq("user_id", userId);
+  await supabaseClient.from("watches").delete().eq("channel_id", userId);
+  await supabaseClient.from("watches").delete().eq("watcher_id", userId);
+  await supabaseClient.from("upload_reactions").delete().eq("user_id", userId);
+  await supabaseClient.from("users").delete().eq("id", userId);
+
+  btn.textContent = "Remove account & all uploads"; btn.disabled = false;
+
+  msg.textContent = "Account removed ✓";
+  msg.className   = "admin-msg success";
+
+  document.getElementById("adminUserResult").style.display = "none";
+  adminTargetUserId = null;
+  document.getElementById("adminSearchInput").value = "";
+
+  // Refresh gallery
+  await loadGallery();
+}
