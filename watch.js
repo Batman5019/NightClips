@@ -484,37 +484,22 @@ async function loadRecommended(currentId) {
 loadVideo();
 
 // =====================
-// 🎬 SECRET: CINEMA MODE
-// Hold the NightClips logo for 2 seconds to toggle
+// 🔊 SECRET: LOGO SOUND
+// Hold the NightClips logo for 2 seconds to play a sound
 // =====================
 (function() {
   let holdTimer  = null;
   let didTrigger = false;
-  let cinemaOn   = false;
-
-  function showToast(msg) {
-    let toast = document.getElementById("cinemaToast");
-    if (!toast) {
-      toast = document.createElement("div");
-      toast.id        = "cinemaToast";
-      toast.className = "cinema-toast";
-      document.body.appendChild(toast);
-    }
-    toast.textContent = msg;
-    toast.classList.add("show");
-    setTimeout(() => { toast.classList.remove("show"); }, 2200);
-  }
 
   const logo = document.querySelector(".nav-logo");
   if (!logo) return;
 
-  function startHold(e) {
+  function startHold() {
     didTrigger = false;
     holdTimer  = setTimeout(() => {
       didTrigger = true;
-      cinemaOn   = !cinemaOn;
-      document.body.classList.toggle("cinema-mode", cinemaOn);
-      showToast(cinemaOn ? "🎬 Cinema mode on" : "Cinema mode off");
+      const audio = new Audio("https://raw.githubusercontent.com/Batman5019/NightClips/main/sound.mp3");
+      audio.play().catch(() => {});
     }, 2000);
   }
 
@@ -523,7 +508,6 @@ loadVideo();
     holdTimer = null;
   }
 
-  // Block navigation if the hold triggered cinema mode
   logo.addEventListener("click", (e) => {
     if (didTrigger) { e.preventDefault(); didTrigger = false; }
   });
