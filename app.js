@@ -924,13 +924,14 @@ function renderGalleryPage() {
     const mediaLink = document.createElement("a");
     mediaLink.href      = `/NightClips/watch.html?id=${file.id}`;
     mediaLink.className = "card-media-link";
+    mediaLink.onclick   = () => { if (galleryQuery) sessionStorage.setItem('nc_search', galleryQuery); };
 
     makeCardThumb(file, mediaLink);
     card.appendChild(mediaLink);
 
     const titleRow = buildCardTitleRowSync(file, galleryUserMap);
     titleRow.style.cursor = "pointer";
-    titleRow.onclick = () => { window.location.href = `/NightClips/watch.html?id=${file.id}`; };
+    titleRow.onclick = () => { if (galleryQuery) sessionStorage.setItem('nc_search', galleryQuery); window.location.href = `/NightClips/watch.html?id=${file.id}`; };
     card.appendChild(titleRow);
 
     // View count
