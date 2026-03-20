@@ -206,38 +206,36 @@ async function handleReaction(uploadId, userId, value) {
   likeBtn.disabled    = true;
   dislikeBtn.disabled = true;
 
-  // Check what the user currently has
-  const { data: existing } = await supabaseClient
+  // Get current reaction
+  const { data: existing, error: fetchErr } = await supabaseClient
     .from("upload_reactions")
-    .select("id, value")
+    .select("value")
     .eq("upload_id", uploadId)
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (existing) {
-    if (existing.value === value) {
-      // Same button → remove (unlike/undislike)
-      await supabaseClient
-        .from("upload_reactions")
-        .delete()
-        .eq("upload_id", uploadId)
-        .eq("user_id", userId);
-    } else {
-      // Opposite button → update value in place
-      await supabaseClient
-        .from("upload_reactions")
-        .update({ value })
-        .eq("upload_id", uploadId)
-        .eq("user_id", userId);
-    }
-  } else {
-    // No reaction yet → insert
-    await supabaseClient
+  if (fetchErr) console.error("fetch reaction error:", fetchErr);
+
+  if (existing && existing.value === value) {
+    // Same button clicked → remove
+    const { error: delErr } = await supabaseClient
       .from("upload_reactions")
-      .insert({ upload_id: uploadId, user_id: userId, value });
+      .delete()
+      .eq("upload_id", uploadId)
+      .eq("user_id", userId);
+    if (delErr) console.error("delete reaction error:", delErr);
+  } else {
+    // No reaction or different → upsert (insert or update)
+    const { error: upsertErr } = await supabaseClient
+      .from("upload_reactions")
+      .upsert(
+        { upload_id: uploadId, user_id: userId, value },
+        { onConflict: "upload_id,user_id" }
+      );
+    if (upsertErr) console.error("upsert reaction error:", upsertErr);
   }
 
-  // Re-fetch and update UI
+  // Re-fetch counts + own reaction
   const { data: reactions } = await supabaseClient
     .from("upload_reactions")
     .select("user_id, value")
