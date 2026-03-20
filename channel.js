@@ -20,10 +20,11 @@ const WATCHER_BADGES = [
 ];
 const CREATOR_BADGE = { img: "https://iili.io/qjDTL5G.png", alt: "Creator" };
 
-function getBadgeForUser(username, watcherCount) {
+function getBadgeForUser(username, watcherCount, override) {
   if (username === "NightClipsOfficial") return CREATOR_BADGE;
+  const effective = (override !== null && override !== undefined) ? override : watcherCount;
   for (const b of WATCHER_BADGES) {
-    if (watcherCount >= b.min) return b;
+    if (effective >= b.min) return b;
   }
   return null;
 }
@@ -249,7 +250,7 @@ async function init() {
   }
 
   const { data: user } = await supabaseClient
-    .from("users").select("id, username, profile_pic_url, description")
+    .from("users").select("id, username, profile_pic_url, description, watcher_override")
     .eq("id", channelId).maybeSingle();
 
   if (!user) {
@@ -268,7 +269,7 @@ async function init() {
   document.getElementById("chanDesc").textContent = user.description || "";
 
   const badgeWrap = document.getElementById("chanBadge");
-  const badge     = getBadgeForUser(username, watcherCount);
+  const badge     = getBadgeForUser(username, watcherCount, user.watcher_override ?? null);
   if (badge) badgeWrap.appendChild(makeBadgeEl(badge));
 
   // Avatar
