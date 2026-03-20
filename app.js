@@ -462,6 +462,12 @@ async function loadProfile() {
   updateHeaderProfile(userRecord.username, userRecord.profile_pic_url);
 }
 
+// View own channel
+document.getElementById("viewChannelBtn").onclick = async () => {
+  const { data: auth } = await supabaseClient.auth.getUser();
+  if (auth.user) window.location.href = `/NightClips/channel.html?id=${auth.user.id}`;
+};
+
 saveProfileBtn.onclick = async () => {
   profileMessage.textContent   = "";
   saveProfileBtn.textContent   = "Saving...";
@@ -881,7 +887,7 @@ function renderPagination(totalPages, totalCount) {
   prev.textContent = "←";
   prev.className   = "page-btn nav-btn" + (galleryPage === 1 ? " disabled" : "");
   prev.disabled    = galleryPage === 1;
-  prev.onclick     = () => { galleryPage--; renderGalleryPage(); window.scrollTo(0, 0); };
+  prev.onclick     = () => { _frameQueue = []; galleryPage--; renderGalleryPage(); window.scrollTo(0, 0); };
   controls.appendChild(prev);
 
   const range = 2;
@@ -895,7 +901,7 @@ function renderPagination(totalPages, totalCount) {
       const btn = document.createElement("button");
       btn.textContent = i;
       btn.className   = "page-btn" + (i === galleryPage ? " active" : "");
-      btn.onclick     = ((page) => () => { galleryPage = page; renderGalleryPage(); window.scrollTo(0, 0); })(i);
+      btn.onclick     = ((page) => () => { _frameQueue = []; galleryPage = page; renderGalleryPage(); window.scrollTo(0, 0); })(i);
       controls.appendChild(btn);
       if (i === galleryPage + range && i < totalPages - 1) {
         const gap = document.createElement("span");
@@ -909,7 +915,7 @@ function renderPagination(totalPages, totalCount) {
   next.textContent = "→";
   next.className   = "page-btn nav-btn" + (galleryPage === totalPages ? " disabled" : "");
   next.disabled    = galleryPage === totalPages;
-  next.onclick     = () => { galleryPage++; renderGalleryPage(); window.scrollTo(0, 0); };
+  next.onclick     = () => { _frameQueue = []; galleryPage++; renderGalleryPage(); window.scrollTo(0, 0); };
   controls.appendChild(next);
 
   pager.appendChild(controls);
