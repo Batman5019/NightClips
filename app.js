@@ -663,9 +663,11 @@ uploadBtn.onclick = async () => {
       }
     }
 
+    const uploadDesc = (document.getElementById("videoDescInput")?.value || "").trim();
     await supabaseClient.from("uploads").insert({
       user_id:        auth.user.id,
       title,
+      description:    uploadDesc,
       file_name:      mediaFile.name,
       file_path:      mediaPath,
       file_type:      mediaFile.type,
@@ -678,6 +680,8 @@ uploadBtn.onclick = async () => {
     thumbnailFileName.textContent  = "No thumbnail selected";
     thumbPreviewWrap.style.display = "none";
     document.getElementById("videoTitleInput").value = "";
+    const descEl = document.getElementById("videoDescInput");
+    if (descEl) descEl.value = "";
     uploadBar.style.width     = "0%";
     uploadMessage.textContent = "Upload complete!";
 
@@ -857,6 +861,7 @@ function makeCardThumb(file, mediaLink) {
 const VIDEOS_PER_PAGE = 10;
 let galleryAllUploads = [];
 let galleryUserMap    = {};
+let galleryViewMap    = {};
 let galleryAuthUser   = null;
 let galleryPage       = 1;
 let galleryQuery      = "";
@@ -874,6 +879,20 @@ async function loadGallery() {
 
   galleryAllUploads = uploads;
   galleryUserMap    = uploads.length > 0 ? await fetchUsersForUploads(uploads) : {};
+
+  // Fetch view counts for all uploads
+  const uploadIds = uploads.map(u => u.id);
+  if (uploadIds.length > 0) {
+    const { data: viewRows } = await supabaseClient
+      .from("upload_views").select("upload_id").in("upload_id", uploadIds);
+    galleryViewMap = {};
+    (viewRows || []).forEach(v => {
+      galleryViewMap[v.upload_id] = (galleryViewMap[v.upload_id] || 0) + 1;
+    });
+  } else {
+    galleryViewMap = {};
+  }
+
   const { data: authData } = await supabaseClient.auth.getUser();
   galleryAuthUser   = authData.user || null;
 
@@ -913,6 +932,13 @@ function renderGalleryPage() {
     titleRow.style.cursor = "pointer";
     titleRow.onclick = () => { window.location.href = `/NightClips/watch.html?id=${file.id}`; };
     card.appendChild(titleRow);
+
+    // View count
+    const views = galleryViewMap[file.id] || 0;
+    const viewEl = document.createElement("p");
+    viewEl.className = "card-views";
+    viewEl.textContent = views === 1 ? "1 view" : `${views} views`;
+    card.appendChild(viewEl);
 
     const dl = document.createElement("a");
     dl.href = url; dl.download = ""; dl.textContent = "Download"; dl.style.display = "block";
