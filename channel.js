@@ -186,12 +186,14 @@ function formatWatchers(n) {
   return String(n);
 }
 
-async function setupWatchButton(channelId, username, watcherCount) {
-  const authUser = await getAuthUser();
-  const btn      = document.getElementById("watchBtn");
-  const countEl  = document.getElementById("watcherCount");
+async function setupWatchButton(channelId, username, watcherCount, watcherOverride) {
+  const authUser    = await getAuthUser();
+  const btn         = document.getElementById("watchBtn");
+  const countEl     = document.getElementById("watcherCount");
+  const displayCount = (watcherOverride !== null && watcherOverride !== undefined)
+    ? watcherOverride : watcherCount;
 
-  countEl.textContent = formatWatchers(watcherCount) + " watching";
+  countEl.textContent = formatWatchers(displayCount) + " watching";
 
   // Don't show watch button on your own channel
   if (!authUser || authUser.id === channelId) {
@@ -215,9 +217,11 @@ async function setupWatchButton(channelId, username, watcherCount) {
       watching = true;
     }
 
-    // Refresh count
-    const newCount  = await getWatcherCount(channelId);
-    countEl.textContent = formatWatchers(newCount) + " watching";
+    // Refresh count — if override is set, keep showing it
+    const newCount     = await getWatcherCount(channelId);
+    const displayCount = (watcherOverride !== null && watcherOverride !== undefined)
+      ? watcherOverride : newCount;
+    countEl.textContent = formatWatchers(displayCount) + " watching";
 
     // Refresh badge
     const badge = getBadgeForUser(username, newCount);
@@ -295,7 +299,7 @@ async function init() {
   document.getElementById("totalViews").textContent = String(totalViews);
 
   // Setup watch button (needs watcherCount)
-  await setupWatchButton(channelId, username, watcherCount);
+  await setupWatchButton(channelId, username, watcherCount, user.watcher_override ?? null);
 
   // Most viewed (top 1)
   const mostViewed     = [...list].sort((a, b) => (viewsMap[b.id] || 0) - (viewsMap[a.id] || 0)).slice(0, 1);
