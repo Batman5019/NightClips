@@ -241,19 +241,66 @@ loginBtn.onclick = async () => {
 // =====================
 // PASSWORD TOGGLE
 // =====================
-const _togglePw = () => {
-  const input  = document.getElementById("passwordInput");
-  const eyeOn  = document.getElementById("eyeIcon");
-  const eyeOff = document.getElementById("eyeOffIcon");
-  const show   = input.type === "password";
-  input.type   = show ? "text" : "password";
-  eyeOn.style.display  = show ? "none"  : "";
-  eyeOff.style.display = show ? ""      : "none";
-};
-document.getElementById("togglePassword").addEventListener("click",  _togglePw);
-document.getElementById("togglePassword").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); _togglePw(); }
-});
+// =====================
+// PASSWORD SHOW / HIDE
+// =====================
+(function() {
+  const input = document.getElementById("passwordInput");
+  if (!input) return;
+
+  // Wrap the input
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "position:relative; width:100%; max-width:300px; display:flex; align-items:center;";
+  input.parentNode.insertBefore(wrap, input);
+  wrap.appendChild(input);
+  input.style.cssText = "width:100%; padding-right:40px; box-sizing:border-box;";
+
+  // Eye button
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.setAttribute("aria-label", "Toggle password visibility");
+  btn.style.cssText = [
+    "position:absolute",
+    "right:12px",
+    "top:50%",
+    "transform:translateY(-50%)",
+    "background:none",
+    "border:none",
+    "padding:0",
+    "margin:0",
+    "width:auto",
+    "min-width:0",
+    "cursor:pointer",
+    "color:#444",
+    "display:flex",
+    "align-items:center",
+    "line-height:1",
+    "transition:color 0.2s",
+  ].join(";");
+
+  btn.innerHTML = `
+    <svg id="eyeShow" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+    <svg id="eyeHide" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>`;
+
+  btn.onmouseenter = () => { btn.style.color = "#aaa"; };
+  btn.onmouseleave = () => { btn.style.color = "#444"; };
+
+  btn.onclick = () => {
+    const isHidden = input.type === "password";
+    input.type = isHidden ? "text" : "password";
+    document.getElementById("eyeShow").style.display = isHidden ? "none" : "";
+    document.getElementById("eyeHide").style.display = isHidden ? ""     : "none";
+    input.focus();
+  };
+
+  wrap.appendChild(btn);
+})();
 
 // =====================
 // BADGES TAB RENDER
