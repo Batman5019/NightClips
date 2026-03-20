@@ -1186,20 +1186,26 @@ async function adminSetWatchers() {
 
   btn.textContent = "Saving..."; btn.disabled = true;
 
-  const { error } = await supabaseClient
+  const { data: updateData, error } = await supabaseClient
     .from("users")
     .update({ watcher_override: value })
-    .eq("id", adminTargetUserId);
+    .eq("id", adminTargetUserId)
+    .select();
+
+  console.log("admin update result:", { updateData, error });
 
   btn.textContent = "Set"; btn.disabled = false;
 
   if (error) {
     msg.textContent = "Failed: " + error.message;
     msg.className   = "admin-msg error";
+  } else if (!updateData || updateData.length === 0) {
+    // RLS silently blocked it — no error but no rows updated
+    msg.textContent = "Blocked by RLS — run the admin policy SQL in Supabase";
+    msg.className   = "admin-msg error";
   } else {
     msg.textContent = `Set to ${value} ✓`;
     msg.className   = "admin-msg success";
-    // Re-run search to refresh meta
     adminSearch();
   }
 }
