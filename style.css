@@ -1417,19 +1417,18 @@ html, body {
 .pw-toggle {
   position: absolute;
   right: 12px;
-  background: none !important;
-  border: none !important;
-  padding: 0 !important;
-  width: auto !important;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: auto;
   color: #444;
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: color 0.2s !important;
+  line-height: 1;
+  user-select: none;
+  transition: color 0.2s;
 }
 
-.pw-toggle:hover {
-  color: #888 !important;
-  background: none !important;
-  border-color: transparent !important;
-}
+.pw-toggle:hover { color: #999; }
