@@ -51,6 +51,7 @@ const BADGES = [
 // ELEMENTS
 // =====================
 let latestUploadTime = 0;
+let currentUserId = null;
 const authPage       = document.getElementById("authPage");
 const dashboardPage  = document.getElementById("dashboardPage");
 const usernameInput  = document.getElementById("usernameInput");
@@ -275,6 +276,7 @@ async function init() {
   }
   authPage.style.display      = "none";
   dashboardPage.style.display = "block";
+  currentUserId = data.user.id;
   userIdText.textContent      = "#" + data.user.id.slice(0, 7);
 
   await loadProfile();
@@ -463,9 +465,8 @@ async function loadProfile() {
 }
 
 // View own channel
-document.getElementById("viewChannelBtn").onclick = async () => {
-  const { data: auth } = await supabaseClient.auth.getUser();
-  if (auth.user) window.location.href = `/NightClips/channel.html?id=${auth.user.id}`;
+document.getElementById("viewChannelBtn").onclick = () => {
+  if (currentUserId) window.location.href = `/NightClips/channel.html?id=${currentUserId}`;
 };
 
 saveProfileBtn.onclick = async () => {
