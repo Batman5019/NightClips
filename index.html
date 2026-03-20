@@ -65,6 +65,10 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>
       <span class="tab-label">Badges</span>
     </button>
+    <button class="tab-btn" data-tab="adminTab" id="adminTabBtn" style="display:none;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span class="tab-label">Admin</span>
+    </button>
   </div>
 
   <!-- BANNER -->
@@ -211,6 +215,54 @@
   <div id="badgesTab" class="tab-content" style="display:none;">
     <h3 style="color:#333; font-size:0.8em; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin:0 0 16px;">Badges</h3>
     <div id="badgesList" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+  </div>
+
+  <!-- ADMIN TAB -->
+  <div id="adminTab" class="tab-content" style="display:none;">
+    <div class="admin-panel">
+      <p class="admin-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Admin Panel
+      </p>
+
+      <!-- Search user -->
+      <div class="admin-search-row">
+        <input id="adminSearchInput" type="text" placeholder="Search username..." class="admin-input">
+        <button id="adminSearchBtn" class="admin-btn">Search</button>
+      </div>
+      <p id="adminSearchMsg" class="admin-msg"></p>
+
+      <!-- User result -->
+      <div id="adminUserResult" style="display:none;" class="admin-user-card">
+        <div class="admin-user-header">
+          <div id="adminUserAvatar" class="admin-avatar-wrap"></div>
+          <div class="admin-user-info">
+            <p id="adminUserName" class="admin-username"></p>
+            <p id="adminUserMeta" class="admin-usermeta"></p>
+          </div>
+        </div>
+
+        <!-- Set watchers -->
+        <div class="admin-action-group">
+          <label class="admin-label">Set watcher count</label>
+          <div class="admin-row">
+            <input id="adminWatcherInput" type="number" min="0" placeholder="e.g. 1000" class="admin-input" style="max-width:160px;">
+            <button id="adminSetWatchersBtn" class="admin-btn">Set</button>
+          </div>
+          <p id="adminWatcherMsg" class="admin-msg"></p>
+        </div>
+
+        <!-- Ban user -->
+        <div class="admin-action-group">
+          <label class="admin-label">Danger zone</label>
+          <button id="adminBanBtn" class="admin-ban-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+            Remove account & all uploads
+          </button>
+          <p id="adminBanMsg" class="admin-msg"></p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- CONFIRM DELETE MODAL -->
