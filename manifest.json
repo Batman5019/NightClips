@@ -1,11 +1,12 @@
 {
   "name": "NightClips",
   "short_name": "NightClips",
+  "description": "Share your moments",
   "start_url": "/NightClips/",
-  "scope": "/NightClips/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/NightClips/icon-192.png",
