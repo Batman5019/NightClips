@@ -85,10 +85,52 @@ async function loadVideo() {
   document.title = title + " · NightClips";
   document.getElementById("watchTitle").textContent = title;
 
+  // Description
+  const descEl = document.getElementById("watchDescription");
+  if (descEl) {
+    const desc = (file.description || "").trim();
+    if (desc) {
+      descEl.textContent = desc;
+      descEl.style.display = "block";
+    } else {
+      descEl.style.display = "none";
+    }
+  }
+
+  // View count
+  const { count: viewCount } = await supabaseClient
+    .from("upload_views").select("id", { count: "exact", head: true })
+    .eq("upload_id", file.id);
+  const viewEl = document.getElementById("watchViewCount");
+  if (viewEl) viewEl.textContent = (viewCount || 0) + " view" + (viewCount === 1 ? "" : "s");
+
   // Download
   const dlBtn = document.getElementById("watchDownload");
   dlBtn.href     = mediaUrl;
   dlBtn.download = file.file_name || "file";
+
+  // Share / Copy link
+  const shareBtn = document.getElementById("watchShare");
+  if (shareBtn) {
+    shareBtn.onclick = async () => {
+      const url = window.location.href;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, url });
+          return;
+        } catch (_) {}
+      }
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(url);
+        const orig = shareBtn.textContent;
+        shareBtn.textContent = "Copied!";
+        setTimeout(() => { shareBtn.textContent = orig; }, 2000);
+      } catch (_) {
+        prompt("Copy this link:", url);
+      }
+    };
+  }
 
   // Uploader — clicking goes to channel page
   const uploader   = await getUserRecord(file.user_id);
@@ -440,3 +482,48 @@ async function loadRecommended(currentId) {
 // INIT
 // =====================
 loadVideo();
+
+// =====================
+// 🎬 SECRET: CINEMA MODE
+// Hold the NightClips logo for 2 seconds to toggle
+// =====================
+(function() {
+  let holdTimer = null;
+  let cinemaOn  = false;
+
+  function showToast(msg) {
+    let toast = document.getElementById("cinemaToast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id        = "cinemaToast";
+      toast.className = "cinema-toast";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => { toast.classList.remove("show"); }, 2200);
+  }
+
+  const logo = document.querySelector(".nav-logo");
+  if (!logo) return;
+
+  logo.addEventListener("mousedown",   startHold);
+  logo.addEventListener("touchstart",  startHold, { passive: true });
+  logo.addEventListener("mouseup",     cancelHold);
+  logo.addEventListener("mouseleave",  cancelHold);
+  logo.addEventListener("touchend",    cancelHold);
+  logo.addEventListener("touchcancel", cancelHold);
+
+  function startHold() {
+    holdTimer = setTimeout(() => {
+      cinemaOn = !cinemaOn;
+      document.body.classList.toggle("cinema-mode", cinemaOn);
+      showToast(cinemaOn ? "🎬 Cinema mode on" : "Cinema mode off");
+    }, 2000);
+  }
+
+  function cancelHold() {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+  }
+})();
