@@ -1227,31 +1227,56 @@ async function adminBanUser() {
 
   const userId = adminTargetUserId;
 
-  // Delete uploads from storage
-  const { data: uploads } = await supabaseClient
-    .from("uploads").select("file_path, thumbnail_path").eq("user_id", userId);
+  try {
+    // Delete uploads from storage
+    const { data: uploads } = await supabaseClient
+      .from("uploads").select("file_path, thumbnail_path").eq("user_id", userId);
 
-  if (uploads && uploads.length > 0) {
-    const paths = uploads.flatMap(u => [
-      u.file_path,
-      u.thumbnail_path && u.thumbnail_path !== u.file_path ? u.thumbnail_path : null
-    ]).filter(Boolean);
-    if (paths.length > 0)
-      await supabaseClient.storage.from("public-files").remove(paths);
-    await supabaseClient.from("uploads").delete().eq("user_id", userId);
+    if (uploads && uploads.length > 0) {
+      const paths = uploads.flatMap(u => [
+        u.file_path,
+        u.thumbnail_path && u.thumbnail_path !== u.file_path ? u.thumbnail_path : null
+      ]).filter(Boolean);
+      if (paths.length > 0)
+        await supabaseClient.storage.from("public-files").remove(paths);
+      const { error: uploadsDelErr } = await supabaseClient.from("uploads").delete().eq("user_id", userId);
+      if (uploadsDelErr) console.error("uploads delete error:", uploadsDelErr);
+    }
+
+    // Delete related rows
+    const delOps = [
+      supabaseClient.from("comments").delete().eq("user_id", userId),
+      supabaseClient.from("watches").delete().eq("channel_id", userId),
+      supabaseClient.from("watches").delete().eq("watcher_id", userId),
+      supabaseClient.from("upload_reactions").delete().eq("user_id", userId),
+      supabaseClient.from("upload_views").delete().eq("upload_id").in(
+        (await supabaseClient.from("uploads").select("id").eq("user_id", userId)).data?.map(u => u.id) || []
+      ),
+    ];
+    const results = await Promise.all(delOps);
+    results.forEach((r, i) => { if (r.error) console.error(`delete op ${i} error:`, r.error); });
+
+    // Delete user row last
+    const { data: delData, error: userDelErr } = await supabaseClient
+      .from("users").delete().eq("id", userId).select();
+    if (userDelErr) {
+      console.error("user delete error:", userDelErr);
+      throw new Error(userDelErr.message);
+    }
+    if (!delData || delData.length === 0) {
+      throw new Error("RLS blocked user deletion — run admin delete policy SQL in Supabase");
+    }
+
+    btn.textContent = "Remove account & all uploads"; btn.disabled = false;
+    msg.textContent = "Account removed ✓";
+    msg.className   = "admin-msg success";
+  } catch (err) {
+    btn.textContent = "Remove account & all uploads"; btn.disabled = false;
+    msg.textContent = "Failed: " + err.message;
+    msg.className   = "admin-msg error";
+    console.error("adminBanUser error:", err);
+    return;
   }
-
-  // Delete comments, watches, reactions, user row
-  await supabaseClient.from("comments").delete().eq("user_id", userId);
-  await supabaseClient.from("watches").delete().eq("channel_id", userId);
-  await supabaseClient.from("watches").delete().eq("watcher_id", userId);
-  await supabaseClient.from("upload_reactions").delete().eq("user_id", userId);
-  await supabaseClient.from("users").delete().eq("id", userId);
-
-  btn.textContent = "Remove account & all uploads"; btn.disabled = false;
-
-  msg.textContent = "Account removed ✓";
-  msg.className   = "admin-msg success";
 
   document.getElementById("adminUserResult").style.display = "none";
   adminTargetUserId = null;
