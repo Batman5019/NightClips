@@ -1396,3 +1396,40 @@ html, body {
   .admin-search-row { flex-direction: column; }
   .admin-btn { width: 100%; justify-content: center; }
 }
+
+/* =========================
+   PASSWORD TOGGLE
+========================= */
+.password-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrap input {
+  width: 100%;
+  max-width: 100%;
+  padding-right: 42px;
+}
+
+.pw-toggle {
+  position: absolute;
+  right: 12px;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  width: auto !important;
+  color: #444;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s !important;
+}
+
+.pw-toggle:hover {
+  color: #888 !important;
+  background: none !important;
+  border-color: transparent !important;
+}
