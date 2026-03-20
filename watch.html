@@ -13,7 +13,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
 <!-- TOP NAV -->
 <nav class="watch-nav">
   <a href="/NightClips/" class="nav-logo">
@@ -21,66 +20,65 @@
     <span>NightClips</span>
   </a>
 </nav>
-
 <!-- MAIN LAYOUT -->
 <div class="watch-layout">
-
   <!-- LEFT: VIDEO + INFO + COMMENTS -->
   <div class="watch-main">
-
     <!-- VIDEO PLAYER -->
     <div class="watch-player-wrap">
       <video id="watchVideo" class="watch-video" controls playsinline></video>
     </div>
-
     <!-- VIDEO INFO -->
     <div class="watch-info">
       <h1 id="watchTitle" class="watch-title"></h1>
-
+      <!-- View count -->
+      <p id="watchViewCount" class="watch-view-count"></p>
+      <!-- Description -->
+      <p id="watchDescription" class="watch-description" style="display:none;"></p>
       <div class="watch-meta">
         <div class="watch-uploader" id="watchUploader">
           <div id="watchAvatarWrap"></div>
           <span id="watchUsername"></span>
         </div>
-
-        <!-- NEW: actions -->
         <div class="watch-actions">
           <button id="likeBtn" class="react-btn" type="button">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
-  <span id="likeCount">0</span>
-</button>
-<button id="dislikeBtn" class="react-btn" type="button">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17"/></svg>
-  <span id="dislikeCount">0</span>
-</button>
-          <a id="watchDownload" class="watch-download-btn" download>Download</a>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
+            <span id="likeCount">0</span>
+          </button>
+          <button id="dislikeBtn" class="react-btn" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17"/></svg>
+            <span id="dislikeCount">0</span>
+          </button>
+          <button id="watchShare" class="react-btn" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+          <a id="watchDownload" class="react-btn" download>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </a>
         </div>
       </div>
     </div>
-
     <!-- COMMENTS -->
     <div class="watch-comments">
       <h2 class="comments-heading">Comments</h2>
-
       <div id="commentForm" class="comment-form" style="display:none;">
         <textarea id="commentInput" class="comment-input" placeholder="Add a comment..." rows="2"></textarea>
-        <button id="commentSubmit" class="comment-submit-btn">Post</button>
+        <div class="comment-form-footer">
+          <button id="commentSubmit" class="comment-submit-btn">Post</button>
+        </div>
       </div>
       <p id="commentLoginMsg" class="comment-login-msg" style="display:none;">Log in to comment.</p>
-
       <div id="commentsList" class="comments-list"></div>
     </div>
-
   </div>
-
   <!-- RIGHT: RECOMMENDED -->
   <aside class="watch-sidebar">
     <h2 class="sidebar-heading">Recommended</h2>
     <div id="recommendedList" class="recommended-list"></div>
   </aside>
-
 </div>
-
 <script src="watch.js"></script>
 </body>
 </html>
