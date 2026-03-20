@@ -239,6 +239,19 @@ loginBtn.onclick = async () => {
 };
 
 // =====================
+// PASSWORD TOGGLE
+// =====================
+document.getElementById("togglePassword").onclick = () => {
+  const input     = document.getElementById("passwordInput");
+  const eyeOn     = document.getElementById("eyeIcon");
+  const eyeOff    = document.getElementById("eyeOffIcon");
+  const isHidden  = input.type === "password";
+  input.type      = isHidden ? "text" : "password";
+  eyeOn.style.display  = isHidden ? "none"  : "block";
+  eyeOff.style.display = isHidden ? "block" : "none";
+};
+
+// =====================
 // BADGES TAB RENDER
 // =====================
 function renderBadgesTab(earnedBadgeIds = []) {
