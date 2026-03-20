@@ -241,15 +241,19 @@ loginBtn.onclick = async () => {
 // =====================
 // PASSWORD TOGGLE
 // =====================
-document.getElementById("togglePassword").onclick = () => {
-  const input     = document.getElementById("passwordInput");
-  const eyeOn     = document.getElementById("eyeIcon");
-  const eyeOff    = document.getElementById("eyeOffIcon");
-  const isHidden  = input.type === "password";
-  input.type      = isHidden ? "text" : "password";
-  eyeOn.style.display  = isHidden ? "none"  : "block";
-  eyeOff.style.display = isHidden ? "block" : "none";
+const _togglePw = () => {
+  const input  = document.getElementById("passwordInput");
+  const eyeOn  = document.getElementById("eyeIcon");
+  const eyeOff = document.getElementById("eyeOffIcon");
+  const show   = input.type === "password";
+  input.type   = show ? "text" : "password";
+  eyeOn.style.display  = show ? "none"  : "";
+  eyeOff.style.display = show ? ""      : "none";
 };
+document.getElementById("togglePassword").addEventListener("click",  _togglePw);
+document.getElementById("togglePassword").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); _togglePw(); }
+});
 
 // =====================
 // BADGES TAB RENDER
