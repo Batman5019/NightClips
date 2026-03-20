@@ -488,8 +488,9 @@ loadVideo();
 // Hold the NightClips logo for 2 seconds to toggle
 // =====================
 (function() {
-  let holdTimer = null;
-  let cinemaOn  = false;
+  let holdTimer  = null;
+  let didTrigger = false;
+  let cinemaOn   = false;
 
   function showToast(msg) {
     let toast = document.getElementById("cinemaToast");
@@ -507,16 +508,11 @@ loadVideo();
   const logo = document.querySelector(".nav-logo");
   if (!logo) return;
 
-  logo.addEventListener("mousedown",   startHold);
-  logo.addEventListener("touchstart",  startHold, { passive: true });
-  logo.addEventListener("mouseup",     cancelHold);
-  logo.addEventListener("mouseleave",  cancelHold);
-  logo.addEventListener("touchend",    cancelHold);
-  logo.addEventListener("touchcancel", cancelHold);
-
-  function startHold() {
-    holdTimer = setTimeout(() => {
-      cinemaOn = !cinemaOn;
+  function startHold(e) {
+    didTrigger = false;
+    holdTimer  = setTimeout(() => {
+      didTrigger = true;
+      cinemaOn   = !cinemaOn;
       document.body.classList.toggle("cinema-mode", cinemaOn);
       showToast(cinemaOn ? "🎬 Cinema mode on" : "Cinema mode off");
     }, 2000);
@@ -526,4 +522,16 @@ loadVideo();
     clearTimeout(holdTimer);
     holdTimer = null;
   }
+
+  // Block navigation if the hold triggered cinema mode
+  logo.addEventListener("click", (e) => {
+    if (didTrigger) { e.preventDefault(); didTrigger = false; }
+  });
+
+  logo.addEventListener("mousedown",   startHold);
+  logo.addEventListener("touchstart",  startHold, { passive: true });
+  logo.addEventListener("mouseup",     cancelHold);
+  logo.addEventListener("mouseleave",  cancelHold);
+  logo.addEventListener("touchend",    cancelHold);
+  logo.addEventListener("touchcancel", cancelHold);
 })();
