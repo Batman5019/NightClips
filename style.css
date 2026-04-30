@@ -1406,3 +1406,14 @@ html, body {
   font-weight: 600;
   margin: -4px 2px 2px;
 }
+/* Hover preview video injected into .card-media-link */
+.card-hover-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  z-index: 2;
+  pointer-events: none;
+}
