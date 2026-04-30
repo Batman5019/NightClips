@@ -131,7 +131,6 @@ function captureVideoFrame(file) {
 
 // =====================
 // FRAME CAPTURE — from a remote URL (used in gallery/library cards)
-// Throttled to max 2 concurrent captures to prevent lag
 // =====================
 let _frameQueue = [];
 let _frameActive = 0;
@@ -180,6 +179,70 @@ function _captureFrame(videoUrl, imgEl) {
     });
     video.addEventListener("error", () => { video.src = ""; resolve(); });
     video.load();
+  });
+}
+
+// =====================
+// HOVER PREVIEW
+// Attach a silent video preview that plays on mouseenter for video cards
+// =====================
+function attachHoverPreview(mediaLink, videoUrl) {
+  let previewVid = null;
+  let hoverTimer = null;
+
+  mediaLink.addEventListener("mouseenter", () => {
+    // Small delay so fast-passes don't fire
+    hoverTimer = setTimeout(() => {
+      if (previewVid) return;
+
+      previewVid = document.createElement("video");
+      previewVid.src         = videoUrl;
+      previewVid.muted       = true;
+      previewVid.loop        = true;
+      previewVid.playsInline = true;
+      previewVid.preload     = "auto";
+      previewVid.className   = "card-hover-preview";
+
+      mediaLink.appendChild(previewVid);
+      previewVid.play().catch(() => {});
+    }, 400);
+  });
+
+  mediaLink.addEventListener("mouseleave", () => {
+    clearTimeout(hoverTimer);
+    hoverTimer = null;
+    if (previewVid) {
+      previewVid.pause();
+      previewVid.remove();
+      previewVid = null;
+    }
+  });
+
+  // Touch: tap-hold to preview (optional, non-disruptive)
+  let touchTimer = null;
+  mediaLink.addEventListener("touchstart", () => {
+    touchTimer = setTimeout(() => {
+      if (previewVid) return;
+      previewVid = document.createElement("video");
+      previewVid.src         = videoUrl;
+      previewVid.muted       = true;
+      previewVid.loop        = true;
+      previewVid.playsInline = true;
+      previewVid.preload     = "auto";
+      previewVid.className   = "card-hover-preview";
+      mediaLink.appendChild(previewVid);
+      previewVid.play().catch(() => {});
+    }, 600);
+  }, { passive: true });
+
+  mediaLink.addEventListener("touchend", () => {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+    if (previewVid) {
+      previewVid.pause();
+      previewVid.remove();
+      previewVid = null;
+    }
   });
 }
 
@@ -239,23 +302,18 @@ loginBtn.onclick = async () => {
 };
 
 // =====================
-// PASSWORD TOGGLE
-// =====================
-// =====================
 // PASSWORD SHOW / HIDE
 // =====================
 (function() {
   const input = document.getElementById("passwordInput");
   if (!input) return;
 
-  // Wrap the input
   const wrap = document.createElement("div");
   wrap.style.cssText = "position:relative; width:100%; max-width:300px; display:flex; align-items:center;";
   input.parentNode.insertBefore(wrap, input);
   wrap.appendChild(input);
   input.style.cssText = "width:100%; padding-right:40px; box-sizing:border-box;";
 
-  // Eye button
   const btn = document.createElement("button");
   btn.type = "button";
   btn.setAttribute("aria-label", "Toggle password visibility");
@@ -529,7 +587,6 @@ async function loadProfile() {
   updateHeaderProfile(userRecord.username, userRecord.profile_pic_url);
 }
 
-// View own channel
 document.getElementById("viewChannelBtn").onclick = () => {
   if (currentUserId) window.location.href = `/NightClips/channel.html?id=${currentUserId}`;
 };
@@ -652,7 +709,6 @@ uploadBtn.onclick = async () => {
         .from("public-files").upload(thumbnailPath, thumbnailFile, { upsert: true });
       if (thumbError) throw thumbError;
     } else {
-      // No thumbnail — capture a frame from the video file
       uploadMessage.textContent = "Generating thumbnail...";
       const frameBlob = await captureVideoFrame(mediaFile);
       if (frameBlob) {
@@ -697,7 +753,7 @@ uploadBtn.onclick = async () => {
 };
 
 // =====================
-// VIDEO CARD CONTENT (inline player fallback)
+// VIDEO CARD CONTENT
 // =====================
 function createVideoCardContent(url) {
   const container = document.createElement("div");
@@ -751,7 +807,6 @@ async function fetchUsersForUploads(uploads) {
     map[u.id] = u;
     profilePicCache[u.id] = u.profile_pic_url || null;
   });
-  // Fetch watcher counts for badge display
   const uncached = uniqueIds.filter(id => watcherCountCache[id] === undefined);
   if (uncached.length > 0) {
     const { data: wd } = await supabaseClient
@@ -823,7 +878,6 @@ function buildCardTitleRowSync(file, userMap) {
 
 // =====================
 // MAKE CARD THUMBNAIL
-// Shows stored thumbnail, or captures a live frame for videos with none
 // =====================
 function makeCardThumb(file, mediaLink) {
   const isImage = file.file_type && file.file_type.startsWith("image");
@@ -837,21 +891,24 @@ function makeCardThumb(file, mediaLink) {
     if (isImage) img.style.aspectRatio = "auto";
     mediaLink.appendChild(img);
   } else if (!isImage) {
-    // Video with no stored thumbnail — capture a frame live
     const img = document.createElement("img");
     img.className = "card-thumb";
     img.alt       = "";
-    // Show placeholder colour while frame loads
     img.style.background = "#0d0d0d";
     mediaLink.appendChild(img);
     const videoUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
     attachFrameFromUrl(videoUrl, img);
   } else {
-    // Image with no thumbnail path (shouldn't happen, but fallback)
     const placeholder = document.createElement("div");
     placeholder.className = "card-thumb-placeholder";
     placeholder.innerHTML = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
     mediaLink.appendChild(placeholder);
+  }
+
+  // Attach hover preview for video files only
+  if (!isImage) {
+    const videoUrl = supabaseClient.storage.from("public-files").getPublicUrl(file.file_path).data.publicUrl;
+    attachHoverPreview(mediaLink, videoUrl);
   }
 }
 
@@ -880,7 +937,6 @@ async function loadGallery() {
   galleryAllUploads = uploads;
   galleryUserMap    = uploads.length > 0 ? await fetchUsersForUploads(uploads) : {};
 
-  // Fetch view counts for all uploads
   const uploadIds = uploads.map(u => u.id);
   if (uploadIds.length > 0) {
     const { data: viewRows } = await supabaseClient
@@ -934,7 +990,6 @@ function renderGalleryPage() {
     titleRow.onclick = () => { if (galleryQuery) sessionStorage.setItem('nc_search', galleryQuery); window.location.href = `/NightClips/watch.html?id=${file.id}`; };
     card.appendChild(titleRow);
 
-    // View count
     const views = galleryViewMap[file.id] || 0;
     const viewEl = document.createElement("p");
     viewEl.className = "card-views";
@@ -1022,7 +1077,7 @@ function renderPagination(totalPages, totalCount) {
 }
 
 // =====================
-// SEARCH — videos + users
+// SEARCH
 // =====================
 let searchDebounce = null;
 
@@ -1166,7 +1221,6 @@ document.addEventListener("keydown", (e) => {
 
 // =====================
 // ADMIN PANEL
-// Only visible to NightClipsOfficial
 // =====================
 const ADMIN_USERNAME = "NightClipsOfficial";
 let adminTargetUserId = null;
@@ -1178,19 +1232,14 @@ async function initAdminPanel() {
   const record = await getUserRecord(auth.user.id);
   if (!record || record.username !== ADMIN_USERNAME) return;
 
-  // Show admin tab
   document.getElementById("adminTabBtn").style.display = "inline-flex";
 
-  // Search
   document.getElementById("adminSearchBtn").onclick = adminSearch;
   document.getElementById("adminSearchInput").addEventListener("keydown", (e) => {
     if (e.key === "Enter") adminSearch();
   });
 
-  // Set watchers
   document.getElementById("adminSetWatchersBtn").onclick = adminSetWatchers;
-
-  // Ban
   document.getElementById("adminBanBtn").onclick = adminBanUser;
 }
 
@@ -1219,7 +1268,6 @@ async function adminSearch() {
 
   const user = users[0];
 
-  // Block searching for yourself
   if (user.username === ADMIN_USERNAME) {
     msg.textContent = "Cannot target admin account";
     return;
@@ -1227,13 +1275,11 @@ async function adminSearch() {
 
   adminTargetUserId = user.id;
 
-  // Get real watcher count + upload count
   const [{ count: watcherCount }, { count: uploadCount }] = await Promise.all([
     supabaseClient.from("watches").select("id", { count: "exact", head: true }).eq("channel_id", user.id),
     supabaseClient.from("uploads").select("id", { count: "exact", head: true }).eq("user_id", user.id),
   ]);
 
-  // Render avatar
   const avWrap = document.getElementById("adminUserAvatar");
   avWrap.innerHTML = "";
   if (user.profile_pic_url) {
@@ -1252,11 +1298,9 @@ async function adminSearch() {
     `${watcherCount || 0} watchers · ${uploadCount || 0} uploads` +
     (user.watcher_override !== null ? ` · Override: ${user.watcher_override}` : "");
 
-  // Pre-fill watcher input with current override or real count
   document.getElementById("adminWatcherInput").value =
     user.watcher_override !== null ? user.watcher_override : (watcherCount || 0);
 
-  // Reset messages
   document.getElementById("adminWatcherMsg").textContent = "";
   document.getElementById("adminWatcherMsg").className   = "admin-msg";
   document.getElementById("adminBanMsg").textContent     = "";
@@ -1283,15 +1327,12 @@ async function adminSetWatchers() {
     .eq("id", adminTargetUserId)
     .select();
 
-  console.log("admin update result:", { updateData, error });
-
   btn.textContent = "Set"; btn.disabled = false;
 
   if (error) {
     msg.textContent = "Failed: " + error.message;
     msg.className   = "admin-msg error";
   } else if (!updateData || updateData.length === 0) {
-    // RLS silently blocked it — no error but no rows updated
     msg.textContent = "Blocked by RLS — run the admin policy SQL in Supabase";
     msg.className   = "admin-msg error";
   } else {
@@ -1319,7 +1360,6 @@ async function adminBanUser() {
   const userId = adminTargetUserId;
 
   try {
-    // Delete uploads from storage
     const { data: uploads } = await supabaseClient
       .from("uploads").select("file_path, thumbnail_path").eq("user_id", userId);
 
@@ -1334,20 +1374,15 @@ async function adminBanUser() {
       if (uploadsDelErr) console.error("uploads delete error:", uploadsDelErr);
     }
 
-    // Delete related rows
     const delOps = [
       supabaseClient.from("comments").delete().eq("user_id", userId),
       supabaseClient.from("watches").delete().eq("channel_id", userId),
       supabaseClient.from("watches").delete().eq("watcher_id", userId),
       supabaseClient.from("upload_reactions").delete().eq("user_id", userId),
-      supabaseClient.from("upload_views").delete().eq("upload_id").in(
-        (await supabaseClient.from("uploads").select("id").eq("user_id", userId)).data?.map(u => u.id) || []
-      ),
     ];
     const results = await Promise.all(delOps);
     results.forEach((r, i) => { if (r.error) console.error(`delete op ${i} error:`, r.error); });
 
-    // Delete user row last
     const { data: delData, error: userDelErr } = await supabaseClient
       .from("users").delete().eq("id", userId).select();
     if (userDelErr) {
@@ -1373,6 +1408,5 @@ async function adminBanUser() {
   adminTargetUserId = null;
   document.getElementById("adminSearchInput").value = "";
 
-  // Refresh gallery
   await loadGallery();
 }
