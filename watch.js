@@ -6,6 +6,95 @@ const supabaseClient = createClient(
 );
 
 // =====================
+// INTRO VIDEO
+// =====================
+const INTRO_URL = "https://raw.githubusercontent.com/Batman5019/NightClips/main/lv_0_20260428233209.mp4";
+
+function playIntroThenMain(playerWrap, mainVideoSrc, isImage) {
+  // Build a fullscreen-style intro overlay inside the player wrap
+  const overlay = document.createElement("div");
+  overlay.style.cssText = [
+    "position:absolute",
+    "inset:0",
+    "z-index:10",
+    "background:#000",
+    "border-radius:inherit",
+    "display:flex",
+    "flex-direction:column",
+    "align-items:center",
+    "justify-content:center",
+    "overflow:hidden",
+  ].join(";");
+
+  const introVid = document.createElement("video");
+  introVid.src        = INTRO_URL;
+  introVid.autoplay   = true;
+  introVid.muted      = false;
+  introVid.playsInline = true;
+  introVid.style.cssText = "width:100%;height:100%;object-fit:contain;background:#000;";
+
+  // Skip button
+  const skipBtn = document.createElement("button");
+  skipBtn.textContent = "Skip ›";
+  skipBtn.style.cssText = [
+    "position:absolute",
+    "bottom:16px",
+    "right:16px",
+    "background:rgba(0,0,0,0.55)",
+    "border:1px solid rgba(255,255,255,0.15)",
+    "color:#ccc",
+    "padding:6px 14px",
+    "border-radius:6px",
+    "font-size:0.82em",
+    "font-weight:700",
+    "font-family:inherit",
+    "cursor:pointer",
+    "transition:background 0.2s",
+    "z-index:11",
+  ].join(";");
+  skipBtn.onmouseenter = () => { skipBtn.style.background = "rgba(30,30,30,0.85)"; };
+  skipBtn.onmouseleave = () => { skipBtn.style.background = "rgba(0,0,0,0.55)"; };
+
+  overlay.appendChild(introVid);
+  overlay.appendChild(skipBtn);
+
+  // Make sure playerWrap is positioned so overlay can be absolute inside it
+  if (!["relative","absolute","fixed","sticky"].includes(getComputedStyle(playerWrap).position)) {
+    playerWrap.style.position = "relative";
+  }
+  playerWrap.appendChild(overlay);
+
+  function finishIntro() {
+    overlay.remove();
+    startMain();
+  }
+
+  introVid.addEventListener("ended", finishIntro);
+  skipBtn.addEventListener("click",  finishIntro);
+
+  // Fallback — if intro fails to load, go straight to main
+  introVid.addEventListener("error", finishIntro);
+
+  function startMain() {
+    if (isImage) {
+      playerWrap.innerHTML = "";
+      playerWrap.style.aspectRatio = "auto";
+      playerWrap.style.background  = "transparent";
+      const img = document.createElement("img");
+      img.src = mainVideoSrc;
+      img.style.cssText = "width:100%;border-radius:12px;display:block;max-height:80vh;object-fit:contain;background:#000;";
+      playerWrap.appendChild(img);
+    } else {
+      const existingVid = document.getElementById("watchVideo");
+      if (existingVid) {
+        existingVid.src = mainVideoSrc;
+        existingVid.play().catch(() => {});
+      }
+    }
+  }
+}
+
+// =====================
 // HELPERS
 // =====================
 const params  = new URLSearchParams(window.location.search);
@@ -67,18 +156,8 @@ async function loadVideo() {
   const isImage    = file.file_type && file.file_type.startsWith("image");
   const playerWrap = document.querySelector(".watch-player-wrap");
 
-  if (isImage) {
-    playerWrap.innerHTML = "";
-    playerWrap.style.aspectRatio = "auto";
-    playerWrap.style.background  = "transparent";
-    const img = document.createElement("img");
-    img.src = mediaUrl;
-    img.style.cssText = "width:100%; border-radius:12px; display:block; max-height:80vh; object-fit:contain; background:#000;";
-    playerWrap.appendChild(img);
-  } else {
-    const vid = document.getElementById("watchVideo");
-    vid.src = mediaUrl;
-  }
+  // Play intro first, then main content
+  playIntroThenMain(playerWrap, mediaUrl, isImage);
 
   // Title
   const title = cleanTitle(file.title);
@@ -115,12 +194,8 @@ async function loadVideo() {
     shareBtn.onclick = async () => {
       const url = window.location.href;
       if (navigator.share) {
-        try {
-          await navigator.share({ title, url });
-          return;
-        } catch (_) {}
+        try { await navigator.share({ title, url }); return; } catch (_) {}
       }
-      // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(url);
         const orig = shareBtn.textContent;
@@ -132,7 +207,7 @@ async function loadVideo() {
     };
   }
 
-  // Uploader — clicking goes to channel page
+  // Uploader
   const uploader   = await getUserRecord(file.user_id);
   const avatarWrap = document.getElementById("watchAvatarWrap");
   avatarWrap.appendChild(makeAvatar(uploader?.profile_pic_url, 34));
@@ -140,7 +215,7 @@ async function loadVideo() {
   const username = uploader?.username || "Unknown";
   document.getElementById("watchUsername").textContent = username;
 
-  // Fetch watcher count and show badge next to username
+  // Watcher badge
   const { count: watcherCount } = await supabaseClient
     .from("watches")
     .select("id", { count: "exact", head: true })
@@ -175,20 +250,17 @@ async function loadVideo() {
     window.location.href = `/NightClips/channel.html?id=${file.user_id}`;
   };
 
-  // Auth user needed for likes + comments
   const authUser = await getAuthUser();
 
   // Record a view
   supabaseClient.from("upload_views").insert({ upload_id: file.id });
 
-  // Load everything in parallel
   await Promise.all([
     loadReactions(file.id, authUser),
     loadComments(file.id, authUser),
     loadRecommended(file.id),
   ]);
 
-  // Comment form visibility
   if (authUser) {
     document.getElementById("commentForm").style.display = "flex";
   } else {
@@ -210,7 +282,6 @@ async function loadReactions(uploadId, authUser) {
   const likeCount    = document.getElementById("likeCount");
   const dislikeCount = document.getElementById("dislikeCount");
 
-  // Fetch all reactions for this upload
   const { data: reactions } = await supabaseClient
     .from("upload_reactions")
     .select("user_id, value")
@@ -223,7 +294,6 @@ async function loadReactions(uploadId, authUser) {
   dislikeCount.textContent = dislikes;
 
   if (!authUser) {
-    // Not logged in — show counts but disable buttons
     likeBtn.disabled    = true;
     dislikeBtn.disabled = true;
     likeBtn.title    = "Log in to react";
@@ -231,16 +301,13 @@ async function loadReactions(uploadId, authUser) {
     return;
   }
 
-  // Check current user's existing reaction
   const mine = (reactions || []).find(r => r.user_id === authUser.id);
   updateReactionUI(mine?.value ?? null);
 
-  // Wire buttons
   likeBtn.onclick    = () => handleReaction(uploadId, authUser.id,  1);
   dislikeBtn.onclick = () => handleReaction(uploadId, authUser.id, -1);
 }
 
-// Toggle a reaction: click same = remove, click opposite = switch
 async function handleReaction(uploadId, userId, value) {
   const likeBtn    = document.getElementById("likeBtn");
   const dislikeBtn = document.getElementById("dislikeBtn");
@@ -248,7 +315,6 @@ async function handleReaction(uploadId, userId, value) {
   likeBtn.disabled    = true;
   dislikeBtn.disabled = true;
 
-  // Get current reaction
   const { data: existing, error: fetchErr } = await supabaseClient
     .from("upload_reactions")
     .select("value")
@@ -259,7 +325,6 @@ async function handleReaction(uploadId, userId, value) {
   if (fetchErr) console.error("fetch reaction error:", fetchErr);
 
   if (existing && existing.value === value) {
-    // Same button clicked → remove
     const { error: delErr } = await supabaseClient
       .from("upload_reactions")
       .delete()
@@ -267,7 +332,6 @@ async function handleReaction(uploadId, userId, value) {
       .eq("user_id", userId);
     if (delErr) console.error("delete reaction error:", delErr);
   } else {
-    // No reaction or different → upsert (insert or update)
     const { error: upsertErr } = await supabaseClient
       .from("upload_reactions")
       .upsert(
@@ -277,7 +341,6 @@ async function handleReaction(uploadId, userId, value) {
     if (upsertErr) console.error("upsert reaction error:", upsertErr);
   }
 
-  // Re-fetch counts + own reaction
   const { data: reactions } = await supabaseClient
     .from("upload_reactions")
     .select("user_id, value")
@@ -296,13 +359,9 @@ async function handleReaction(uploadId, userId, value) {
   dislikeBtn.disabled = false;
 }
 
-// Update button active states
 function updateReactionUI(myValue) {
-  const likeBtn    = document.getElementById("likeBtn");
-  const dislikeBtn = document.getElementById("dislikeBtn");
-
-  likeBtn.classList.toggle("active",    myValue ===  1);
-  dislikeBtn.classList.toggle("active", myValue === -1);
+  document.getElementById("likeBtn").classList.toggle("active",    myValue ===  1);
+  document.getElementById("dislikeBtn").classList.toggle("active", myValue === -1);
 }
 
 // =====================
@@ -328,7 +387,6 @@ async function loadComments(uploadId, authUser) {
     return;
   }
 
-  // Batch fetch user records
   const uniqueIds = [...new Set(comments.map(c => c.user_id))];
   const { data: users } = await supabaseClient
     .from("users").select("id, username, profile_pic_url").in("id", uniqueIds);
@@ -340,7 +398,6 @@ async function loadComments(uploadId, authUser) {
     const item = document.createElement("div");
     item.className = "comment-item";
 
-    // Avatar
     const av = document.createElement(user.profile_pic_url ? "img" : "div");
     if (user.profile_pic_url) {
       av.src = user.profile_pic_url;
@@ -431,7 +488,6 @@ async function loadRecommended(currentId) {
     return;
   }
 
-  // Batch fetch uploaders
   const uniqueIds = [...new Set(uploads.map(u => u.user_id))];
   const { data: users } = await supabaseClient
     .from("users").select("id, username, profile_pic_url").in("id", uniqueIds);
@@ -485,7 +541,6 @@ loadVideo();
 
 // =====================
 // 🔊 SECRET: LOGO SOUND
-// Hold the NightClips logo for 2 seconds to play a sound
 // =====================
 (function() {
   let holdTimer  = null;
